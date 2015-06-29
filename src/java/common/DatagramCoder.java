@@ -17,6 +17,18 @@ import java.nio.charset.Charset;
 public class DatagramCoder {
 
     static String DefaultCharset = "ASCII";
+    
+    
+    public static byte[] strHex16ToByte(String strHex16){
+        if (strHex16.isEmpty()||strHex16.length()%2!=0) {
+            return null;
+        }
+        byte[] bRet = new byte[strHex16.length()/2];
+        for (int i = 0,j=0; i < bRet.length; i++,j+=2) {
+            bRet[i] = (byte) Integer.parseInt(strHex16.substring(j,2),16);
+        }
+        return bRet;
+    }
 
     public static byte[] checkMsgForm(byte[] bytes, byte byteHead, byte byteOperator, byte[] byteDealCode) {
         byte[] byteTemp = null, byteData = null;
@@ -63,7 +75,7 @@ public class DatagramCoder {
         return null;
     }
 
-    public static char[] PadRight(char[] byteSource, int size) {
+    public static char[] padRight(char[] byteSource, int size) {
         if (byteSource.length == size) {
             return byteSource;
         }
@@ -73,8 +85,48 @@ public class DatagramCoder {
         }
         char[] byteResult = new char[size];
         System.arraycopy(byteSource, 0, byteResult, 0, byteSource.length);
-        for (int i = iLack; i > byteSource.length; i--) {
+        for (int i = iLack; i > size; i--) {
             byteResult[i] = 0x00;
+        }
+        return byteResult;
+    }
+    
+    public static String padRight(String strSource,int iSize){
+        return padRight(strSource,iSize,'0');
+    }
+    
+    public static String padRight(String strSource,int size,char cFill){
+         if (strSource.length() == size) {
+            return strSource;
+        }
+        int iLack = size - strSource.length();
+        if (iLack < 0) {
+            return strSource;
+        }
+        StringBuffer sbStr = new StringBuffer();
+        sbStr.append(strSource);
+        for (int i = iLack; i > size; i--) {
+            sbStr.append(cFill);
+        }
+        return sbStr.toString();
+    }
+
+    public static byte[] padRight(byte[] byteSource, int iSize) {
+        return DatagramCoder.padRight(byteSource, iSize, (byte)0x00);
+    }
+
+    public static byte[] padRight(byte[] byteSource, int size, byte byteFill) {
+        if (byteSource.length == size) {
+            return byteSource;
+        }
+        int iLack = size - byteSource.length;
+        if (iLack < 0) {
+            return byteSource;
+        }
+        byte[] byteResult = new byte[size];
+        System.arraycopy(byteSource, 0, byteResult, 0, byteSource.length);
+        for (int i = iLack; i > size; i--) {
+            byteResult[i] = byteFill;
         }
         return byteResult;
     }
@@ -180,7 +232,7 @@ public class DatagramCoder {
 //        secondByte = (0x000000FF & ((int) buf[index + 1]));
 //        thirdByte = (0x000000FF & ((int) buf[index + 2]));
 //        fourthByte = (0x000000FF & ((int) buf[index + 3]));
-        firstByte = (0x000000FF & ((int) buf[index+3]));
+        firstByte = (0x000000FF & ((int) buf[index + 3]));
         secondByte = (0x000000FF & ((int) buf[index + 2]));
         thirdByte = (0x000000FF & ((int) buf[index + 1]));
         fourthByte = (0x000000FF & ((int) buf[index + 0]));

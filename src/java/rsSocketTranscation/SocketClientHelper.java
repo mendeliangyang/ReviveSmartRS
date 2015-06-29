@@ -8,16 +8,8 @@ package rsSocketTranscation;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.SocketAddress;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.lang.Byte;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,6 +19,8 @@ import java.util.Map;
  */
 public class SocketClientHelper {
 
+    
+    
     /**
      *
      * @param byteMsg

@@ -16,6 +16,8 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import net.sf.json.JSONObject;
 import rsSocketTranscation.SocketClientHelper;
+import rsSocketTranscation.SocketMsgSet;
+import rsSvc.AustraliaBankRS.Model.txn_0402Entity;
 
 /**
  * REST Web Service
@@ -40,34 +42,30 @@ public class AustraliaBankRS {
     @Path("ChangePassword")
     public String ChangePassword(String param) {
 
-        txn_040402Entity txn = null;
+        txn_0402Entity txn = null;
         JSONObject jObj = null, jBody = null;
         int iFlag = -1;
         byte[] byteMsg = null, byteRets = null;
+        String strTemp = null;
         try {
             jObj = JSONObject.fromObject(param);
             jBody = jObj.getJSONObject("body");
-            txn = new txn_040402Entity();
-            txn.CardNo = common.DatagramCoder.PadRight(jBody.getString("CardNo").toCharArray(), 150);
-            txn.OldPasswd = common.DatagramCoder.PadRight(jBody.getString("OldPasswd").toCharArray(), 30);
-            txn.NewPasswd = common.DatagramCoder.PadRight(jBody.getString("NewPasswd").toCharArray(), 30);
-            txn.IdCardType = common.DatagramCoder.PadRight(jBody.getString("IdCardType").toCharArray(), 3);
-            txn.IdCardNo = common.DatagramCoder.PadRight(jBody.getString("IdCardNo").toCharArray(), 20);
+            txn = new txn_0402Entity();
+            txn.CardNo = common.DatagramCoder.padRight(jBody.getString("CardNo").toCharArray(), 150);
+
+            //去掉 首尾  02  03
+            strTemp= jBody.getString("OldPasswd");
+            txn.OldPasswd=DatagramCoder.hexStringToBytes(DatagramCoder.padRight(strTemp.substring(2, strTemp.length() - 4), 60));
+           
+            strTemp= jBody.getString("NewPasswd");
+            txn.NewPasswd = DatagramCoder.hexStringToBytes( DatagramCoder.padRight( strTemp.substring(2,strTemp.length()-4),60));
+
+            txn.IdCardType = common.DatagramCoder.padRight(jBody.getString("IdCardType").toCharArray(), 3);
+            txn.IdCardNo = common.DatagramCoder.padRight(jBody.getString("IdCardNo").toCharArray(), 20);
 
             //            数据包格式：040402
             //报文头（0x02） +操作类型（0x81）+ 交易码（6个字节）+ 数据长度（4个字节）+ 报文内容（ buf ）+ 报文尾（0x03）
-            int iMsgSize = 1 + 1 + 6 + 4 + 150 + 30 + 30 + 3 + 20 + 1;
-            byteMsg = new byte[iMsgSize];
-            byteMsg[0] = (byte) 0x02;
-            byteMsg[1] = (byte) 0x81;
-            System.arraycopy(common.DatagramCoder.takeStringToByte("040402"), 0, byteMsg, 2, 6);
-            System.arraycopy(common.DatagramCoder.intToByteArray(150 + 30 + 30 + 3 + 20), 0, byteMsg, 8, 4);
-            System.arraycopy(DatagramCoder.getBytes(txn.CardNo), 0, byteMsg, 8 + 4, 150);
-            System.arraycopy(DatagramCoder.getBytes(txn.OldPasswd), 0, byteMsg, 8 + 4 + 150, 30);
-            System.arraycopy(DatagramCoder.getBytes(txn.NewPasswd), 0, byteMsg, 8 + 4 + 150 + 30, 30);
-            System.arraycopy(DatagramCoder.getBytes(txn.IdCardType), 0, byteMsg, 8 + 4 + 150 + 30 + 30, 3);
-            System.arraycopy(DatagramCoder.getBytes(txn.IdCardNo), 0, byteMsg, 8 + 4 + 150 + 30 + 30 + 3, 20);
-            byteMsg[245] = (byte) (int) 0x03;
+            byteMsg = SocketMsgSet.TakeMsgByte((byte) 0x81, "040402", txn.toBytesFromSelf());
 
             byteRets = SocketClientHelper.DealOnce(byteMsg);
 
@@ -84,7 +82,7 @@ public class AustraliaBankRS {
 //            byteOddNum[2] = byteData[3];
 //            byteOddNum[3] = byteData[2];
 //            int iOddNum = DatagramCoder.unsigned4BytesToInt(byteOddNum, 0);
-            if (byteData == null||byteData.length==0) {
+            if (byteData == null || byteData.length == 0) {
                 return formationResult.formationResult(ResponseResultCode.Error, "申请改密失败", "", (Object) null);
             }
             //定时发送    报文头（0x02） +操作类型（0x84）+单号长度（4个字节）+单号+ 报文尾（0x03）
@@ -101,7 +99,7 @@ public class AustraliaBankRS {
                 byteData = SocketClientHelper.DealOnce(byteMsg);
                 //判断报文格式是否正确
                 byte[] byteNum = DatagramCoder.checkMsgForm(byteData, (byte) 0x02, (byte) 0x84, null);
-                if (null ==byteNum) {
+                if (null == byteNum) {
                     return formationResult.formationResult(ResponseResultCode.Error, "获取处理结果失败。", "", (Object) null);
                 }
                 //有0和1  不考虑处理失败
@@ -113,13 +111,13 @@ public class AustraliaBankRS {
 //                int iMsgLen = DatagramCoder.unsigned4BytesToInt(byteNum, 0);
 //                byteRet = new byte[iMsgLen];
 //                System.arraycopy(byteData, 6, byteRet, 0, iMsgLen);
-                    //todo 不清楚具体的数据
+                //todo 不清楚具体的数据
                 //System.Text.Encoding.ASCII.GetString(byteRet);
                 //int iRetCode= BitConverter.ToInt32(byteRet,0);
-                if (byteNum[0] == 0x01) {
-                    return formationResult.formationResult(ResponseResultCode.Success, "修改密码成功。", "",(Object) null);
+                if (byteNum[0] == 0x31) {
+                    return formationResult.formationResult(ResponseResultCode.Success, "修改密码成功。", "", (Object) null);
                 }
-                    //5s 询问一次  一定时间内都是0就更新为失败
+                //5s 询问一次  一定时间内都是0就更新为失败
                 //System.Threading.Thread.Sleep(5000);
                 Thread.sleep(5000);
                 iRequestCount++;
@@ -132,12 +130,4 @@ public class AustraliaBankRS {
         }
     }
 
-    public class txn_040402Entity {
-
-        public char[] CardNo;
-        public char[] OldPasswd;
-        public char[] NewPasswd;
-        public char[] IdCardType;
-        public char[] IdCardNo;
-    }
 }

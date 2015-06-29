@@ -56,6 +56,20 @@
         <dbUser>sa</dbUser>
         <dbpwd>123456</dbpwd>
     </systemSet>
+    <systemSet id="ElectornicBank">
+        <dbAddress>192.168.100.64</dbAddress>
+        <dbPort>5000</dbPort>
+        <dbName>ElectornicBank</dbName>
+        <dbUser>sa</dbUser>
+        <dbpwd>123456</dbpwd>
+    </systemSet>
+    <systemSet id="CreditApply">
+        <dbAddress>192.168.100.64</dbAddress>
+        <dbPort>5000</dbPort>
+        <dbName>CreditApply</dbName>
+        <dbUser>sa</dbUser>
+        <dbpwd>123456</dbpwd>
+    </systemSet>
     <httpPath>http://220.231.153.66:80/ReviveSmartRS/</httpPath>
     <httpAddress>220.231.153.66</httpAddress>
     <httpPort>80</httpPort>
