@@ -19,9 +19,9 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class ReadDeploySetServlet extends HttpServlet {
 
-    public ReadDeploySetServlet() throws Exception {
+    public ReadDeploySetServlet() throws Exception  {
         if(!DeployInfo.readSetUp()){
-            throw new Exception("load deployInfo failed,check log.");
+            throw new Exception("load deployInfo failed,check log. "+DeployInfo.DeployRootPath+".");
         }
     }
 
@@ -35,7 +35,12 @@ public class ReadDeploySetServlet extends HttpServlet {
      * @throws IOException if an I/O error occurs
      */
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+            throws ServletException, IOException, Exception {
+        if(!DeployInfo.readSetUp()){
+            throw new Exception("server started up read SetUp file. "+DeployInfo.DeployRootPath+".");
+        }
+        
+        
         response.setContentType("text/html;charset=UTF-8");
         try (PrintWriter out = response.getWriter()) {
             /* output your page here. You may use following sample code. */
@@ -63,7 +68,13 @@ public class ReadDeploySetServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        processRequest(request, response);
+        
+        try {
+            processRequest(request, response);
+        } catch (Exception ex) {
+            throw new ServletException("load deployInfo failed,check log. "+DeployInfo.DeployRootPath+"."+ex.getLocalizedMessage());
+        }
+        
     }
 
     /**
@@ -77,7 +88,11 @@ public class ReadDeploySetServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        processRequest(request, response);
+       try {
+            processRequest(request, response);
+        } catch (Exception ex) {
+            throw new ServletException("load deployInfo failed,check log. "+DeployInfo.DeployRootPath+"."+ex.getLocalizedMessage());
+        }
     }
 
     /**

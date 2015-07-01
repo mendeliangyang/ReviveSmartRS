@@ -24,7 +24,7 @@ public class DeployInfo {
     public static String ResultDataTag = "resultDatas";
     public static String StringLinkMark = "|";
 
-    public static boolean readSetUp() {
+    public static boolean readSetUp() throws Exception {
         File fXmlFile = null;
         DocumentBuilderFactory dbFactory = null;
         DocumentBuilder dBuilder = null;
@@ -128,7 +128,8 @@ public class DeployInfo {
 
         } catch (Exception ex) {
             Logger.getLogger(DeployInfo.class.getName()).log(Level.SEVERE, null, ex);
-            return false;
+            throw new Exception("readSetUp error. setUpFilePath :"+fXmlFile);
+           // return false;
         } finally {
             fXmlFile = null;
             dbFactory = null;
@@ -221,13 +222,15 @@ public class DeployInfo {
     }
 
 //	public static String DeployRootPath = "c:/temp";new File("").getAbsolutePath()
-    private static String DeployRootPath = null;
+    public static String DeployRootPath = null;
 
     //加载本地目录，并返回
     private static String DoGetDelplyRootPath() {
         StringBuffer sb = new StringBuffer();
         DeployRootPath = DeployInfo.class.getProtectionDomain().getCodeSource().getLocation().getPath();
         DeployRootPath = DeployRootPath.substring(1, DeployRootPath.indexOf("WEB-INF"));
+        DeployRootPath = sb.append(File.separator).append(DeployRootPath).toString();
+        sb.delete(0, sb.length());
         DeployFilePath = sb.append(DeployRootPath).append("FileDepot").toString();// DeployRootPath + "FileDepot";
         sb.delete(0, sb.length());
         DeployLogPath = sb.append(DeployRootPath).append("Log").toString();//DeployRootPath + "Log";
