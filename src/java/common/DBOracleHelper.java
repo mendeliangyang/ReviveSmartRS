@@ -5,6 +5,7 @@
  */
 package common;
 
+import common.model.SystemSetModel;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -15,41 +16,44 @@ import java.util.Properties;
  * @author Administrator
  */
 public class DBOracleHelper {
-    
-    private static Connection ASAConnect(String UserID, String Password, String Machinename, String DBName, String dbPort) {
-        // uses global Connection variable
 
-        //String _coninfo = Machinename;
+    //todo oracleHelper
+    private static final String jdbcOracleDriverName = "oracle.jdbc.driver.OracleDriver";
+
+    private static final String jdbcPostgresDriverName = "org.postgresql.Driver";
+
+    private Connection ASAConnect(String UserID, String Password, String Machinename, String DBName, String dbPort) {
         StringBuffer temp = null;
         // Load the Sybase Driver
         try {
-            Properties _props = new Properties();
-            _props.put("user", UserID);
-            _props.put("password", Password);
-            Class.forName("com.sybase.jdbc3.jdbc.SybDriver").newInstance();
+            //rl="jdbc:oracle:thin:@localhost:1521:orcl"; 
+            Class.forName(jdbcOracleDriverName);
             temp = new StringBuffer();
-            // Use the Sybase jConnect driver...
-            temp.append("jdbc:sybase:Tds:");
-            // to connect to the supplied machine name...
+            temp.append("jdbc:oracle:thin:@");
             temp.append(Machinename);
-            // on the default port number for ASA...
             temp.append(":");
             temp.append(dbPort);
-            temp.append("/");
-            //temp.append(":5000/");
-            temp.append(DBName);
-            temp.append("?ServiceName=");
+            temp.append(":");
             temp.append(DBName);
             // and connect.
             RSLogger.LogInfo(temp.toString());
-            return DriverManager.getConnection(temp.toString(), _props);
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | SQLException e) {
-            //e.printStackTrace();
+            return DriverManager.getConnection(temp.toString(), UserID, Password);
+        } catch (ClassNotFoundException | SQLException e) {
             RSLogger.ErrorLogInfo("get db connection error." + e.getMessage());
             return null;
         } finally {
             temp = null;
         }
     }
-    
+
+    public Connection ConnectSybase(String pId) throws Exception {
+        
+        SystemSetModel setModel = DeployInfo.GetSystemSetsByID(pId);
+        if (setModel == null) {
+            RSLogger.ErrorLogInfo("Could not find the db connection.");
+            return null;
+        }
+        return this.ASAConnect(setModel.dbUser, setModel.dbPwd, setModel.dbAddress, setModel.dbName, setModel.dbPort);
+    }
+
 }
