@@ -236,10 +236,16 @@ public class DBHelper {
         StringBuffer tempSql = new StringBuffer();
         StringBuffer tempColumn = new StringBuffer();
         StringBuffer tempValue = new StringBuffer();
+        String identityKeyName = null;
         try {
             Set tableIterator = FindTableDetail(paramModel.db_tableName, paramModel.rsid);
 
-            tempSql.append("INSERT INTO ").append(paramModel.db_tableName).append("( ");
+            identityKeyName = FindTableIdentityKey(tableIterator);
+            if (identityKeyName != null) {
+                tempSql.append("SET NOCOUNT ON ");
+            }
+            
+            tempSql.append(" INSERT INTO ").append(paramModel.db_tableName).append("( ");
 
             Iterator keys = paramModel.db_valueColumns.keySet().iterator();
             while (keys.hasNext()) {
@@ -257,6 +263,10 @@ public class DBHelper {
             }
             tempSql.append(tempColumn.substring(0, tempColumn.length() - 1)).append(" ) VALUES (");
             tempSql.append(tempValue.substring(0, tempValue.length() - 1)).append(")");
+            
+            if (identityKeyName != null) {
+                tempSql.append(" SELECT @@IDENTITY AS ").append(identityKeyName);
+            }
 
             RSLogger.LogInfo(tempSql.toString());
             return tempSql.toString();
@@ -267,6 +277,7 @@ public class DBHelper {
             tempSql = null;
             tempColumn = null;
             tempValue = null;
+            identityKeyName =null;
         }
     }
 
@@ -753,6 +764,50 @@ public class DBHelper {
             result.close();
             table.accumulate(DeployInfo.ResultDataTag, rows);
             rows = null;
+            //table.accumulate("rowCount", dataIndex);
+        } catch (SQLException e) {
+            //e.printStackTrace();
+            RSLogger.ErrorLogInfo("ExecuteSqlSelect err sql:" + sqlStr + "exception.msg" + e.getLocalizedMessage());
+            return new ExecuteResultParam(-1, e.getLocalizedMessage());
+        } finally {
+            DBHelper.CloseConnection(result, stmt, conn);
+        }
+        return new ExecuteResultParam(0, "", table);
+    }
+    
+    /**
+     * 插入数据，并查询当前数据的identity
+     * @param rsid
+     * @param sqlStr
+     * @return
+     * @throws Exception 
+     */
+    public static ExecuteResultParam ExecuteSqlInsertSelect(String rsid, String sqlStr) throws Exception {
+        RSLogger.LogInfo("executeSql : " + rsid + " sql: " + sqlStr);
+        Connection conn = null;
+        Statement stmt = null;
+        JSONObject table = null;
+        ResultSet result = null;
+        try {
+            conn = DBHelper.ConnectSybase(rsid);
+            stmt = conn.createStatement();
+            result = stmt.executeQuery(sqlStr);
+            ResultSetMetaData rsmd = result.getMetaData();
+            int columnCount = rsmd.getColumnCount();
+            table = new JSONObject();
+            JSONObject row = null;
+            while (result.next()) {
+                row = new JSONObject();
+                for (int j = 1; j <= columnCount; j++) {
+                    //todo 根据列的类型转换数据类型
+                    //1获取操作的表
+                    //2，根据字段名称转换
+                    row.accumulate(rsmd.getColumnName(j), result.getString(j));
+                }
+            }
+            rsmd = null;
+            result.close();
+            table.accumulate(DeployInfo.ResultDataTag, row);
             //table.accumulate("rowCount", dataIndex);
         } catch (SQLException e) {
             //e.printStackTrace();

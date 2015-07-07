@@ -472,6 +472,7 @@ public class ReviveRS {
     public String InsertModel(String param) {
         ExecuteResultParam resultParam = null;
         ReviveRSParamModel paramModel = null;
+        String tempSql = null;
         try {
             paramModel = analyzeParamModel.transferReviveRSParamModel(param, OperateTypeEnum.insert);
 
@@ -479,13 +480,18 @@ public class ReviveRS {
             if (!isSignOn) {
                 return formationResult.formationResult(ResponseResultCode.Error, "请您先登录系统。", (Object) null);
             }
-
-            resultParam = DBHelper.ExecuteSql(paramModel.rsid, DBHelper.SqlInsertFactory(paramModel));
-
+            tempSql = DBHelper.SqlInsertFactory(paramModel);
+            //如果有identity 开始的sql语句以 SET NOCOUNT  ON 开始 执行查询方法
+            if (tempSql.startsWith("SET NOCOUNT ON")) {
+                resultParam = DBHelper.ExecuteSqlInsertSelect(paramModel.rsid, tempSql);
+            } else {
+                resultParam = DBHelper.ExecuteSql(paramModel.rsid, tempSql);
+            }
+            
             if (resultParam.ResultCode >= 0) {
                 //notify data changed
                 JMSQueueMessage.AsyncWriteMessage(paramModel.db_tableName);
-                return formationResult.formationResult(ResponseResultCode.Success, resultParam.ResultCode + "", (Object) null);
+                return formationResult.formationResult(ResponseResultCode.Success, resultParam.ResultCode + "", resultParam.ResultJsonObject);
             } else {
                 return formationResult.formationResult(ResponseResultCode.Error, resultParam.errMsg, (Object) null);
             }
@@ -496,7 +502,7 @@ public class ReviveRS {
             if (paramModel != null) {
                 paramModel.destroySelf();
             }
-            UtileSmart.FreeObjects(resultParam, param, paramModel);
+            UtileSmart.FreeObjects(resultParam, param, paramModel,tempSql);
         }
     }
 
