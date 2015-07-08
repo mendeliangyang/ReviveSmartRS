@@ -244,7 +244,7 @@ public class DBHelper {
             if (identityKeyName != null) {
                 tempSql.append("SET NOCOUNT ON ");
             }
-            
+
             tempSql.append(" INSERT INTO ").append(paramModel.db_tableName).append("( ");
 
             Iterator keys = paramModel.db_valueColumns.keySet().iterator();
@@ -263,7 +263,7 @@ public class DBHelper {
             }
             tempSql.append(tempColumn.substring(0, tempColumn.length() - 1)).append(" ) VALUES (");
             tempSql.append(tempValue.substring(0, tempValue.length() - 1)).append(")");
-            
+
             if (identityKeyName != null) {
                 tempSql.append(" SELECT @@IDENTITY AS ").append(identityKeyName);
             }
@@ -277,7 +277,7 @@ public class DBHelper {
             tempSql = null;
             tempColumn = null;
             tempValue = null;
-            identityKeyName =null;
+            identityKeyName = null;
         }
     }
 
@@ -706,6 +706,40 @@ public class DBHelper {
      * @param sqlStr
      * @return
      */
+    public static ExecuteResultParam ExecuteSql(String rsid, Set<String> sqlStr) throws SQLException {
+        if (sqlStr==null) {
+            return new ExecuteResultParam(-1,"execute sqls is null");
+        }
+        Connection conn = null;
+        Statement stmt = null;
+        Integer iRows=0;
+        try {
+            conn = DBHelper.ConnectSybase(rsid);
+            conn.setAutoCommit(false);
+            stmt = conn.createStatement();
+            for (String sqlStrItem : sqlStr) {
+                iRows += stmt.executeUpdate(sqlStrItem);
+            }
+            conn.commit();
+            return new ExecuteResultParam(iRows);
+        } catch (Exception e) {
+            RSLogger.ErrorLogInfo("ExecuteSql error sql:" + sqlStr + "exception.msg" + e.getLocalizedMessage());
+            if (conn != null) {
+                conn.rollback();
+            }
+            return new ExecuteResultParam(-1, e.getLocalizedMessage());
+        } finally {
+            DBHelper.CloseConnection(stmt, conn);
+        }
+    }
+
+    /**
+     * 执行sql语句
+     *
+     * @param rsid
+     * @param sqlStr
+     * @return
+     */
     public static ExecuteResultParam ExecuteSql(String rsid, String sqlStr) {
         RSLogger.LogInfo("executeSql : " + rsid + " sql: " + sqlStr);
         Connection conn = null;
@@ -774,15 +808,16 @@ public class DBHelper {
         }
         return new ExecuteResultParam(0, "", table);
     }
-    
+
     /**
      * 插入数据，并查询当前数据的identity
+     *
      * @param rsid
      * @param sqlStr
      * @return
-     * @throws Exception 
+     * @throws Exception
      */
-    public static ExecuteResultParam ExecuteSqlInsertSelect(String rsid, String sqlStr) throws Exception {
+    public static ExecuteResultParam ExecuteSqlOnceSelect(String rsid, String sqlStr) throws Exception {
         RSLogger.LogInfo("executeSql : " + rsid + " sql: " + sqlStr);
         Connection conn = null;
         Statement stmt = null;
@@ -928,7 +963,7 @@ public class DBHelper {
      */
     @Deprecated
     public static ExecuteResultParam GetTableInfosByDataBase(String rsid) {
-        //TODO 如果需要使用该方法，请重新测试，因为获取表机构的方式有所改动
+        //TODO 如果需要使用该方法，请重新测试，因为获取表结构的方式有所改动
         // RSLogger.LogInfo("GetTableInfos : " + rsid);
         Connection conn = null;
         Statement stmt = null;

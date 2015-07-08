@@ -28,6 +28,7 @@ public class ApplicationConfig extends Application {
     private void addRestResourceClasses(Set<Class<?>> resources) {
         resources.add(rsSvc.AustraliaBankRS.AustraliaBankRS.class);
         resources.add(rsSvc.Electornic.ElectornicRS.class);
+        resources.add(rsSvc.FileDepotRS.class);
         resources.add(rsSvc.RESTCorsDemoRequestFilter.class);
         resources.add(rsSvc.RESTCorsDemoResponseFilter.class);
         resources.add(rsSvc.ReviveRS.class);

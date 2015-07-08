@@ -23,6 +23,10 @@ public class DeployInfo {
     public static String paramTableName = "db_tableName";
     public static String ResultDataTag = "resultDatas";
     public static String StringLinkMark = "|";
+    public static String paramtokenKey = "token";
+    public static String paramRSIDKey ="RSID";
+    
+    public static final String MasterRSID ="ReviveSmartDB";
 
     public static boolean readSetUp() throws Exception {
         File fXmlFile = null;

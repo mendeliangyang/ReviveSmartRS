@@ -7,6 +7,7 @@ package rsSvc;
 
 import common.DBHelper;
 import common.DeployInfo;
+import common.FileHelper;
 import common.FormationResult;
 import common.model.ExecuteResultParam;
 import common.NetHelper;
@@ -82,7 +83,7 @@ public class ReviveRS {
             String FileExtension = "";
             String fileName = fileDisposition.getFileName();
             if (fileName.indexOf(".") > 1) {
-                FileExtension = getExtensionName(fileName);
+                FileExtension =FileHelper.getExtensionName(fileName);
                 newFileName = newFileName + "." + FileExtension;
             }
             RSLogger.LogInfo("***** fileName " + fileDisposition.getFileName());
@@ -249,21 +250,7 @@ public class ReviveRS {
         return jsonObj.toString();
     }
 
-    /**
-     * 获取文件扩展名
-     *
-     * @param filename
-     * @return
-     */
-    public static String getExtensionName(String filename) {
-        if ((filename != null) && (filename.length() > 0)) {
-            int dot = filename.lastIndexOf('.');
-            if ((dot > -1) && (dot < (filename.length() - 1))) {
-                return filename.substring(dot + 1);
-            }
-        }
-        return filename;
-    }
+   
 
     /**
      * 获取不带扩展名的文件名
@@ -483,7 +470,7 @@ public class ReviveRS {
             tempSql = DBHelper.SqlInsertFactory(paramModel);
             //如果有identity 开始的sql语句以 SET NOCOUNT  ON 开始 执行查询方法
             if (tempSql.startsWith("SET NOCOUNT ON")) {
-                resultParam = DBHelper.ExecuteSqlInsertSelect(paramModel.rsid, tempSql);
+                resultParam = DBHelper.ExecuteSqlOnceSelect(paramModel.rsid, tempSql);
             } else {
                 resultParam = DBHelper.ExecuteSql(paramModel.rsid, tempSql);
             }

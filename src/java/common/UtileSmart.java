@@ -5,6 +5,8 @@
  */
 package common;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import net.sf.json.JSONObject;
 
 /**
@@ -12,36 +14,45 @@ import net.sf.json.JSONObject;
  * @author Administrator
  */
 public class UtileSmart {
-    
-    public static void FreeObjects(Object... objects){
+
+    public static void FreeObjects(Object... objects) {
         if (objects != null) {
             for (Object obj : objects) {
-                obj=null;
+                obj = null;
             }
         }
     }
-    
+
+    /***
+     * 获取当前系统时间字符串  yyyyMMddHH
+     * @return 
+     */
+    public static String getCurrentDate() {
+        SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHH");//设置日期格式
+        return df.format(new Date());
+    }
+
     public static short overrideParseShort(String strShort) {
-        if (strShort != null&&!strShort.isEmpty()) {
+        if (strShort != null && !strShort.isEmpty()) {
             return Short.parseShort(strShort);
         }
         return -1;
     }
 
     public static int overrideParseInt(String strInt) {
-        if (strInt != null&&!strInt.isEmpty()) {
+        if (strInt != null && !strInt.isEmpty()) {
             return Integer.parseInt(strInt);
         }
         return -1;
     }
 
     /**
-     * 
+     *
      * @param jsonObj
      * @param strParam
-     * @param isException  没有 strParam 属性，true引发异常，false返回null
+     * @param isException 没有 strParam 属性，true引发异常，false返回null
      * @return
-     * @throws Exception 
+     * @throws Exception
      */
     public static String GetJsonString(JSONObject jsonObj, String strParam, boolean isException) throws Exception {
         if (jsonObj.containsKey(strParam)) {
@@ -54,7 +65,7 @@ public class UtileSmart {
     }
 
     /**
-     * 
+     *
      * @param jsonObj
      * @param strParam
      * @return 没有 strParam 属性返回null
