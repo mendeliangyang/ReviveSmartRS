@@ -313,7 +313,7 @@ public class FileDepotRS {
     private void DeleteFile(Set<DepotFileDetailModel> fileDetailModels) {
         if (fileDetailModels != null && !fileDetailModels.isEmpty()) {
             for (DepotFileDetailModel fileDetailModel : fileDetailModels) {
-                if (!fileDetailModel.fileLocalPath.isEmpty()) {
+                if (fileDetailModel.fileLocalPath!=null&&!fileDetailModel.fileLocalPath.isEmpty()) {
                     FileHelper.deleteFile(fileDetailModel.fileLocalPath);
                 }
             }
