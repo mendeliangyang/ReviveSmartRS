@@ -17,6 +17,7 @@ import common.UtileSmart;
 import common.comInterface.IFormationResult;
 import common.model.OperateTypeEnum;
 import common.model.ReviveRSParamModel;
+import common.model.SqlFactoryResultModel;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -83,7 +84,7 @@ public class ReviveRS {
             String FileExtension = "";
             String fileName = fileDisposition.getFileName();
             if (fileName.indexOf(".") > 1) {
-                FileExtension =FileHelper.getExtensionName(fileName);
+                FileExtension = FileHelper.getExtensionName(fileName);
                 newFileName = newFileName + "." + FileExtension;
             }
             RSLogger.LogInfo("***** fileName " + fileDisposition.getFileName());
@@ -249,8 +250,6 @@ public class ReviveRS {
         jsonValues.accumulate(columnName, DeployInfo.StringLinkMark + newColumnValue);
         return jsonObj.toString();
     }
-
-   
 
     /**
      * 获取不带扩展名的文件名
@@ -459,7 +458,7 @@ public class ReviveRS {
     public String InsertModel(String param) {
         ExecuteResultParam resultParam = null;
         ReviveRSParamModel paramModel = null;
-        String tempSql = null;
+        SqlFactoryResultModel sqlResultModel = null;
         try {
             paramModel = analyzeParamModel.transferReviveRSParamModel(param, OperateTypeEnum.insert);
 
@@ -467,17 +466,27 @@ public class ReviveRS {
             if (!isSignOn) {
                 return formationResult.formationResult(ResponseResultCode.Error, "请您先登录系统。", (Object) null);
             }
-            tempSql = DBHelper.SqlInsertFactory(paramModel);
+            sqlResultModel = DBHelper.SqlInsertFactory(paramModel);
             //如果有identity 开始的sql语句以 SET NOCOUNT  ON 开始 执行查询方法
-            if (tempSql.startsWith("SET NOCOUNT ON")) {
-                resultParam = DBHelper.ExecuteSqlOnceSelect(paramModel.rsid, tempSql);
+            if (sqlResultModel.strSql.startsWith("SET NOCOUNT ON")) {
+                resultParam = DBHelper.ExecuteSqlOnceSelect(paramModel.rsid, sqlResultModel.strSql);
             } else {
-                resultParam = DBHelper.ExecuteSql(paramModel.rsid, tempSql);
+                resultParam = DBHelper.ExecuteSql(paramModel.rsid, sqlResultModel.strSql);
             }
-            
+
             if (resultParam.ResultCode >= 0) {
                 //notify data changed
                 JMSQueueMessage.AsyncWriteMessage(paramModel.db_tableName);
+                if (sqlResultModel.columnValue != null && !sqlResultModel.columnValue.isEmpty()) {
+                    JSONObject resultJson = new JSONObject();
+                    for (String keySet : sqlResultModel.columnValue.keySet()) {
+                        resultJson.accumulate(keySet, sqlResultModel.columnValue.get(keySet));
+                    }
+                    if (resultParam.ResultJsonObject==null) {
+                        resultParam.ResultJsonObject = new JSONObject();
+                    }
+                    resultParam.ResultJsonObject.accumulate(DeployInfo.ResultDataTag, resultJson);
+                }
                 return formationResult.formationResult(ResponseResultCode.Success, resultParam.ResultCode + "", resultParam.ResultJsonObject);
             } else {
                 return formationResult.formationResult(ResponseResultCode.Error, resultParam.errMsg, (Object) null);
@@ -489,7 +498,7 @@ public class ReviveRS {
             if (paramModel != null) {
                 paramModel.destroySelf();
             }
-            UtileSmart.FreeObjects(resultParam, param, paramModel,tempSql);
+            UtileSmart.FreeObjects(resultParam, param, paramModel, sqlResultModel);
         }
     }
 

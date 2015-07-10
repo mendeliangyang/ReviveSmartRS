@@ -25,6 +25,7 @@ public class DeployInfo {
     public static String StringLinkMark = "|";
     public static String paramtokenKey = "token";
     public static String paramRSIDKey ="RSID";
+    public static String httpPathLinkMark ="/";
     
     public static final String MasterRSID ="ReviveSmartDB";
 

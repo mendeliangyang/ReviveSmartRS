@@ -14,6 +14,8 @@ public class DepotFileDetailModel {
     public String fileName;
     public String fileOwnType;
     public String fileOperate;
+    public String fileId;
+    public String fileLocalPath;
 
     public DepotFileDetailModel() {
     }
@@ -22,5 +24,12 @@ public class DepotFileDetailModel {
         this.fileName = pFileName;
         this.fileOwnType = pFileOwnType;
         this.fileOperate = pFileOperate;
+    }
+
+    public DepotFileDetailModel(String pFileName, String pFileOwnType, String pFileOperate, String pFileId) {
+        this.fileName = pFileName;
+        this.fileOwnType = pFileOwnType;
+        this.fileOperate = pFileOperate;
+        this.fileId = pFileId;
     }
 }

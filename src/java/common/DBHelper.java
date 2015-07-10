@@ -6,10 +6,12 @@
 package common;
 
 //Import the necessary classes
+import com.sun.faces.util.CollectionsUtils;
 import common.model.ExecuteResultParam;
 import common.model.DataBaseTypeEnum;
 import common.model.DBDetailModel;
 import common.model.ReviveRSParamModel;
+import common.model.SqlFactoryResultModel;
 import common.model.TableDetailModel;
 import common.model.SystemSetModel;
 import common.model.TableInfoModel;
@@ -20,6 +22,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Properties; // Properties
 import java.util.Set;
+import java.util.UUID;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
@@ -232,11 +235,14 @@ public class DBHelper {
      * @param paramModel
      * @return
      */
-    public static String SqlInsertFactory(ReviveRSParamModel paramModel) throws Exception {
+    public static SqlFactoryResultModel SqlInsertFactory(ReviveRSParamModel paramModel) throws Exception {
         StringBuffer tempSql = new StringBuffer();
         StringBuffer tempColumn = new StringBuffer();
         StringBuffer tempValue = new StringBuffer();
-        String identityKeyName = null;
+        String identityKeyName = null, primaryKeyName = null, strUUIDTemp = null;
+        boolean primaryColumnHasValue = true;
+        SqlFactoryResultModel sqlResultModel = new SqlFactoryResultModel();
+        DataBaseTypeEnum primaryColumnDataType = null;
         try {
             Set tableIterator = FindTableDetail(paramModel.db_tableName, paramModel.rsid);
 
@@ -244,14 +250,22 @@ public class DBHelper {
             if (identityKeyName != null) {
                 tempSql.append("SET NOCOUNT ON ");
             }
-
+            primaryKeyName = SearchTablePrimaryKey(paramModel.db_tableName, paramModel.rsid);
+            if (primaryKeyName != null) {
+                primaryColumnDataType = GetColumnType(tableIterator, primaryKeyName);
+            }
             tempSql.append(" INSERT INTO ").append(paramModel.db_tableName).append("( ");
 
             Iterator keys = paramModel.db_valueColumns.keySet().iterator();
+            //在循环中判断，如果主键类型是varchar，但是在没有传入值，默认生成一个 uuid 填充
             while (keys.hasNext()) {
                 String key = (String) keys.next();
+
                 tempColumn.append(key).append(" ,");
                 DataBaseTypeEnum colunmType = GetColumnType(tableIterator, key);
+                if (primaryKeyName.equals(key)) {
+                    primaryColumnHasValue = false;
+                }
                 if (colunmType == DataBaseTypeEnum.number || colunmType == DataBaseTypeEnum.decimal) {
                     tempValue.append(" ").append(paramModel.db_valueColumns.get(key)).append(" ,");
                 } else if (colunmType == DataBaseTypeEnum.charset || colunmType == DataBaseTypeEnum.date || colunmType == DataBaseTypeEnum.time || colunmType == DataBaseTypeEnum.datetime) {
@@ -261,15 +275,28 @@ public class DBHelper {
                 }
                 key = null;
             }
-            tempSql.append(tempColumn.substring(0, tempColumn.length() - 1)).append(" ) VALUES (");
-            tempSql.append(tempValue.substring(0, tempValue.length() - 1)).append(")");
+            if (primaryColumnHasValue && primaryColumnDataType != null && primaryColumnDataType == DataBaseTypeEnum.charset) {
+                sqlResultModel.columnValue = new CollectionsUtils.ConstMap<>();
+                strUUIDTemp = UUID.randomUUID().toString();
+                sqlResultModel.columnValue.put(primaryKeyName, strUUIDTemp);
+                tempSql.append(tempColumn).append(primaryKeyName).append(" ) VALUES (");
+                tempSql.append(tempValue).append("'").append(strUUIDTemp).append("'").append(")");
+            } else {
+                tempSql.append(tempColumn.substring(0, tempColumn.length() - 1)).append(" ) VALUES (");
+                tempSql.append(tempValue.substring(0, tempValue.length() - 1)).append(")");
+            }
 
             if (identityKeyName != null) {
                 tempSql.append(" SELECT @@IDENTITY AS ").append(identityKeyName);
             }
 
             RSLogger.LogInfo(tempSql.toString());
-            return tempSql.toString();
+
+            sqlResultModel.strSql = tempSql.toString();
+            if (primaryColumnHasValue) {
+
+            }
+            return sqlResultModel;
         } catch (Exception e) {
             RSLogger.ErrorLogInfo("SqlInsertFactory error." + e.getMessage());
             throw new Exception("SqlInsertFactory error." + e.getMessage());
@@ -700,19 +727,55 @@ public class DBHelper {
     }
 
     /**
-     * 执行sql语句
      *
      * @param rsid
-     * @param sqlStr
+     * @param sqlStr List<String> 按照集合顺序执行sql ，如果无须按照集合顺序来执行sql选择 Set<String>
+     * 效率较高
      * @return
+     * @throws SQLException
      */
-    public static ExecuteResultParam ExecuteSql(String rsid, Set<String> sqlStr) throws SQLException {
-        if (sqlStr==null) {
-            return new ExecuteResultParam(-1,"execute sqls is null");
+    public static ExecuteResultParam ExecuteSql(String rsid, List<String> sqlStr) throws SQLException {
+        if (sqlStr == null) {
+            return new ExecuteResultParam(-1, "execute sqls is null");
         }
         Connection conn = null;
         Statement stmt = null;
-        Integer iRows=0;
+        Integer iRows = 0;
+        try {
+            conn = DBHelper.ConnectSybase(rsid);
+            conn.setAutoCommit(false);
+            stmt = conn.createStatement();
+            for (String sqlStrItem : sqlStr) {
+                iRows += stmt.executeUpdate(sqlStrItem);
+            }
+            conn.commit();
+            return new ExecuteResultParam(iRows);
+        } catch (Exception e) {
+            RSLogger.ErrorLogInfo("ExecuteSql error sql:" + sqlStr + "exception.msg" + e.getLocalizedMessage());
+            if (conn != null) {
+                conn.rollback();
+            }
+            return new ExecuteResultParam(-1, e.getLocalizedMessage());
+        } finally {
+            DBHelper.CloseConnection(stmt, conn);
+        }
+    }
+
+    /**
+     * 执行sql语句
+     *
+     * @param rsid
+     * @param sqlStr Set<String> set 集合效率较高，但是存储数据无须，如果需要按照集合顺序来执行sql选择
+     * List<String>
+     * @return
+     */
+    public static ExecuteResultParam ExecuteSql(String rsid, Set<String> sqlStr) throws SQLException {
+        if (sqlStr == null) {
+            return new ExecuteResultParam(-1, "execute sqls is null");
+        }
+        Connection conn = null;
+        Statement stmt = null;
+        Integer iRows = 0;
         try {
             conn = DBHelper.ConnectSybase(rsid);
             conn.setAutoCommit(false);
