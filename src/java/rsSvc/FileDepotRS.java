@@ -59,16 +59,33 @@ public class FileDepotRS {
     /**
      * 上传文件到服务器
      *
-     * @param strParam json字符串，文本参数
-     * @param formFileData file 对象
+     * @param pRSID
+     * @param ptoken
+     * @param pownid
+     * @param formFileData
+     * @param pfileType
+     * @param pfilename
      * @return
      */
     @POST
     @Path("UpLoadFile")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public String UpLoadFile(@FormDataParam("param") String strParam, FormDataMultiPart formFileData) {
-        return SaveUpLoadFile(formFileData, strParam, false);
+    public String UpLoadFile(@FormDataParam("RSID") String pRSID, @FormDataParam("token") String ptoken, @FormDataParam("ownid") String pownid, @FormDataParam("filename") String pfilename,@FormDataParam("fileType") String pfileType, FormDataMultiPart formFileData) {
+        
+        FileDepotParamModel paramModel = new FileDepotParamModel();
+        paramModel.ownid = pownid;
+        paramModel.rsid = pRSID;
+        paramModel.token = ptoken;
+        paramModel.fileDetaile = new HashSet<>();
+        DepotFileDetailModel detailModel= new DepotFileDetailModel();
+        detailModel.fileName = pfilename;
+        detailModel.fileOwnType = pfileType;
+        paramModel.fileDetaile.add(detailModel);
+        
+        return SaveUpLoadFile(formFileData, paramModel, false);
     }
+
+   
 
     /**
      * 上传文件到服务器
@@ -179,7 +196,8 @@ public class FileDepotRS {
      * @param isModify 是否提交
      * @return
      */
-    private String SaveUpLoadFile(FormDataMultiPart formFileData, String strJson, boolean isModify) {
+    private String SaveUpLoadFile(FormDataMultiPart formFileData, FileDepotParamModel paramModel, boolean isModify) {
+
         InputStream isTempFile = null;
         FormDataContentDisposition detailTempFile = null;
         String strSvcFileLocalName = null, strUpFileName = null, strTempFilePath = null;
@@ -189,19 +207,15 @@ public class FileDepotRS {
         boolean bSvcFileExist = false;
         Set<String> setStrSqls = new HashSet<>();
         ExecuteResultParam resultParam = null;
-        FileDepotParamModel paramModel = null;
         DepotFileDetailModel tempFileDetailModel = null;
         int saveFlag = 1;
-        try {
-            paramModel = analyzeUpLoadFileJsonStr(strJson, isModify);
-
-            boolean isSignOn = common.VerificationSign.verificationSignOn(paramModel.token, paramModel.rsid);
-            if (!isSignOn) {
-                return formationResult.formationResult(ResponseResultCode.Error, "请您先登录系统。", (Object) null);
-            }
-
-        } catch (Exception e) {
+        if (paramModel == null) {
             return formationResult.formationResult(ResponseResultCode.Error, "解析参数发生错误。", (Object) null);
+        }
+
+        boolean isSignOn = common.VerificationSign.verificationSignOn(paramModel.token, paramModel.rsid);
+        if (!isSignOn) {
+            return formationResult.formationResult(ResponseResultCode.Error, "请您先登录系统。", (Object) null);
         }
         try {
             List<FormDataBodyPart> listFile = formFileData.getFields("file");
@@ -221,6 +235,10 @@ public class FileDepotRS {
                 FileHelper.CheckFileExist(sbTemp.toString());
                 //TODO 如何传入参数 type 路径  并且判断 typePath中是否包含 (File.separator)  如果包含需要判断该文件夹是否存在
                 tempFileDetailModel = paramModel.getFileDetailModel(strUpFileName);
+//                tempFileDetailModel = new DepotFileDetailModel();
+//                tempFileDetailModel.fileName = strUpFileName;
+//                tempFileDetailModel.fileOwnType = "type";
+
                 if (tempFileDetailModel == null) {
                     return formationResult.formationResult(ResponseResultCode.Error, String.format("获取文件‘ %s’的详细参数失败。", strUpFileName), (Object) null);
                 }
@@ -313,7 +331,7 @@ public class FileDepotRS {
     private void DeleteFile(Set<DepotFileDetailModel> fileDetailModels) {
         if (fileDetailModels != null && !fileDetailModels.isEmpty()) {
             for (DepotFileDetailModel fileDetailModel : fileDetailModels) {
-                if (fileDetailModel.fileLocalPath!=null&&!fileDetailModel.fileLocalPath.isEmpty()) {
+                if (fileDetailModel.fileLocalPath != null && !fileDetailModel.fileLocalPath.isEmpty()) {
                     FileHelper.deleteFile(fileDetailModel.fileLocalPath);
                 }
             }
@@ -344,7 +362,6 @@ public class FileDepotRS {
     @Path("InvalidDepotFileByOwn")
     public String InvalidDepotFileByOwn(String strParam) {
         //sbTemp.append(DeployInfo.GetDeployFilePath()).append(sbFilePathTemp);
-
         FileDepotParamModel paramModel = null;
         ExecuteResultParam resultModel = null;
         try {
