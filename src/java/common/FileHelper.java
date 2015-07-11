@@ -6,6 +6,9 @@
 package common;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import org.apache.commons.codec.binary.Base64;
 
 /**
  *
@@ -13,6 +16,27 @@ import java.io.File;
  */
 public class FileHelper {
 
+    
+    public static boolean ConvertBase64ToImage(String Base64param, String filePath) {
+        if (Base64param == null) // 图像数据为空
+        {
+            return false;
+        }
+        //BASE64Decoder decoder = new BASE64Decoder();
+        try {
+            byte[] data = Base64.decodeBase64(Base64param);
+            try (OutputStream stream = new FileOutputStream(filePath)) {
+                stream.write(data);
+                stream.close();
+            }
+            return true;
+        } catch (Exception e) {
+            RSLogger.ErrorLogInfo(e.getMessage());
+            return false;
+        }
+
+    }
+    
     /**
      * 获取文件扩展名
      *

@@ -16,6 +16,7 @@ import java.sql.Time;
  * @author Administrator
  */
 public class VerificationSign {
+    
 
     // private static final short signOutTime = 30; //minute
     /**

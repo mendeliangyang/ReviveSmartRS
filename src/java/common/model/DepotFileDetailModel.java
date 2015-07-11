@@ -16,6 +16,7 @@ public class DepotFileDetailModel {
     public String fileOperate;
     public String fileId;
     public String fileLocalPath;
+    public String fileBase64Value;
 
     public DepotFileDetailModel() {
     }

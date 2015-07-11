@@ -193,7 +193,7 @@ public class ReviveRS {
                 //调用解析图片方法，返回路径
                 //tempBase64
                 int baseIndex = tempBase64.indexOf(";base64,");
-                if (!ConvertBase64ToImage(tempBase64.substring(baseIndex + 8, tempBase64.length()), filePath)) {
+                if (!FileHelper.ConvertBase64ToImage(tempBase64.substring(baseIndex + 8, tempBase64.length()), filePath)) {
                     return formationResult.formationResult(ResponseResultCode.Error, key + ": convert image failed", (Object) null);
                 }
                 //更改values 中的列值
@@ -482,7 +482,7 @@ public class ReviveRS {
                     for (String keySet : sqlResultModel.columnValue.keySet()) {
                         resultJson.accumulate(keySet, sqlResultModel.columnValue.get(keySet));
                     }
-                    if (resultParam.ResultJsonObject==null) {
+                    if (resultParam.ResultJsonObject == null) {
                         resultParam.ResultJsonObject = new JSONObject();
                     }
                     resultParam.ResultJsonObject.accumulate(DeployInfo.ResultDataTag, resultJson);
