@@ -5,10 +5,9 @@
  */
 package rsSvc.AustraliaBankRS;
 
-import common.DBHelper;
 import common.DatagramCoder;
 import common.FormationResult;
-import common.comInterface.IFormationResult;
+import common.model.ExecuteResultParam;
 import common.model.ResponseResultCode;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
@@ -30,7 +29,7 @@ public class AustraliaBankRS {
     @Context
     private UriInfo context;
 
-    private IFormationResult formationResult = new FormationResult();
+    private FormationResult formationResult = new FormationResult();
 
     /**
      * Creates a new instance of AustraliaBankRS
@@ -74,16 +73,16 @@ public class AustraliaBankRS {
             //判断报文格式是否正确
             byteData = DatagramCoder.checkMsgForm(byteRets, (byte) 0x02, (byte) 0x81, null);
             if (byteData == null) {
-                return formationResult.formationResult(ResponseResultCode.Error, "获取申请数据失败", "", (Object) null);
+                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("获取申请数据失败",param ));
             }
-//            byteOddNum = new byte[4];
+//            byteOddNum = new byte[4];1
 //            byteOddNum[0] = byteData[5];
 //            byteOddNum[1] = byteData[4];
 //            byteOddNum[2] = byteData[3];
 //            byteOddNum[3] = byteData[2];
 //            int iOddNum = DatagramCoder.unsigned4BytesToInt(byteOddNum, 0);
             if (byteData == null || byteData.length == 0) {
-                return formationResult.formationResult(ResponseResultCode.Error, "申请改密失败", "", (Object) null);
+                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("申请改密失败",param ));
             }
             //定时发送    报文头（0x02） +操作类型（0x84）+单号长度（4个字节）+单号+ 报文尾（0x03）
             //把第一次返回的信息直接替换操作类型在返回给服务端
@@ -93,14 +92,14 @@ public class AustraliaBankRS {
             while (true) {
                 //请求 24次，2分钟，如果没有返回表示处理失败
                 if (iRequestCount > 24) {
-                    return formationResult.formationResult(ResponseResultCode.Error, "改密处理失败。", "", (Object) null);
+                    return formationResult.formationResult(ResponseResultCode.Error,new ExecuteResultParam("改密处理失败",param ));
                 }
                 //接收：报文头（0x02） +操作类型（0x84）+交易状态长度（4个字节）+交易状态+ 报文尾（0x03）
                 byteData = SocketClientHelper.DealOnce(byteMsg);
                 //判断报文格式是否正确
                 byte[] byteNum = DatagramCoder.checkMsgForm(byteData, (byte) 0x02, (byte) 0x84, null);
                 if (null == byteNum) {
-                    return formationResult.formationResult(ResponseResultCode.Error, "获取处理结果失败。", "", (Object) null);
+                    return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("获取处理结果失败",param ));
                 }
                 //有0和1  不考虑处理失败
 //                byteNum= new byte[4];
@@ -115,7 +114,7 @@ public class AustraliaBankRS {
                 //System.Text.Encoding.ASCII.GetString(byteRet);
                 //int iRetCode= BitConverter.ToInt32(byteRet,0);
                 if (byteNum[0] == 0x31) {
-                    return formationResult.formationResult(ResponseResultCode.Success, "修改密码成功。", "", (Object) null);
+                    return formationResult.formationResult(ResponseResultCode.Success, new ExecuteResultParam());
                 }
                 //5s 询问一次  一定时间内都是0就更新为失败
                 //System.Threading.Thread.Sleep(5000);
@@ -124,7 +123,7 @@ public class AustraliaBankRS {
             }
         } catch (Exception ex) {
             common.RSLogger.ErrorLogInfo("ReviveSignOff error." + ex.getLocalizedMessage());
-            return formationResult.formationResult(ResponseResultCode.Error, ex.getLocalizedMessage(), "", (Object) null);
+            return formationResult.formationResult(ResponseResultCode.Error,new ExecuteResultParam(ex.getLocalizedMessage(),param ,ex));
         } finally {
             common.UtileSmart.FreeObjects(jObj, txn, jBody, byteMsg, byteRets);
         }

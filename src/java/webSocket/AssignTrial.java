@@ -7,12 +7,11 @@ package webSocket;
 
 import common.FormationResult;
 import common.VerificationSign;
-import common.comInterface.IFormationResult;
+import common.model.ExecuteResultParam;
 import common.model.MsgClientPush;
 import common.model.MsgFilterModel;
 import common.model.ResponseResultCode;
 import common.model.SystemSetModel;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -71,14 +70,14 @@ public class AssignTrial {
         System.out.println("AssignTrial onMessage " + session.getId() + " msg: " + msgParam);
         try {
             MsgClientPush msgClient = analyzeMsg.transferMsg(msgParam);
-            IFormationResult formationResult = new FormationResult();
+            FormationResult formationResult = new FormationResult();
             if (msgClient == null) {
-               WebSocketHelper.sendTextToClient(session, formationResult.formationResult(ResponseResultCode.Error, "消息格式错误","token","error",  (Object) null));
+               WebSocketHelper.sendTextToClient(session, formationResult.formationResult(ResponseResultCode.Error,new ExecuteResultParam("解析参数失败", msgParam)));
                 return;
             }
             //todo 验证用户名密码
             if(!VerificationSign.verificationSignUser(msgClient.userName,msgClient.userPwd)){
-                WebSocketHelper.sendTextToClient(session, formationResult.formationResult(ResponseResultCode.Error, "用户名或密码错误","token","error",  (Object) null));
+                WebSocketHelper.sendTextToClient(session, formationResult.formationResult(ResponseResultCode.Error,new ExecuteResultParam("用户名或密码错误", msgParam)));
                 return;
             }
             

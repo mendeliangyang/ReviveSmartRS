@@ -27,14 +27,14 @@ public class TableDetailModel {
         this.tbId = ptbId;
         this.isPrimaryKey=pIsPrimary;
     }
-    public String name;
-    public String type;
-    public String status;
-    public String usertype;
-    public String tbId;
-    public String dataLength;
-    public DataBaseTypeEnum dataType;
-    public String strDataType;
-    public boolean isPrimaryKey;
+    public String name; //名字
+    public String type;//类型
+    public String status;//状态
+    public String usertype;//类型
+    public String tbId;//表id，按照数据库的表id
+    public String dataLength;//数据长度
+    public DataBaseTypeEnum dataType;//数据类型对应java
+    public String strDataType;//
+    public boolean isPrimaryKey;//标识该列是不是主键列
 }
 

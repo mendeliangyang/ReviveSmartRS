@@ -250,7 +250,7 @@ public class DBHelper {
             if (identityKeyName != null) {
                 tempSql.append("SET NOCOUNT ON ");
             }
-            primaryKeyName = SearchTablePrimaryKey(paramModel.db_tableName, paramModel.rsid);
+            primaryKeyName = FindTablePrimaryKey(tableIterator); //SearchTablePrimaryKey(paramModel.db_tableName, paramModel.rsid);
             if (primaryKeyName != null) {
                 primaryColumnDataType = GetColumnType(tableIterator, primaryKeyName);
             }
@@ -341,7 +341,7 @@ public class DBHelper {
 
             if (paramModel.pkValue != null && !paramModel.pkValue.isEmpty()) {
                 //获取主键
-                String tablePrimary = SearchTablePrimaryKey(paramModel.db_tableName, paramModel.rsid);
+                String tablePrimary = FindTablePrimaryKey(tableIterator); //SearchTablePrimaryKey(paramModel.db_tableName, paramModel.rsid);
                 if (tablePrimary == null || tablePrimary.equals("")) {
                     throw new Exception("error: primaryKey not find." + tablePrimary);
                 }
@@ -402,7 +402,7 @@ public class DBHelper {
             //判断是否存在主键,存在主键安装主键删除数据
             if (paramModel.pkValue != null && !paramModel.pkValue.isEmpty()) {
                 //获取主键
-                String tablePrimary = SearchTablePrimaryKey(paramModel.db_tableName, paramModel.rsid);
+                String tablePrimary = FindTablePrimaryKey(tableIterator); //SearchTablePrimaryKey(paramModel.db_tableName, paramModel.rsid);
                 if (tablePrimary == null || tablePrimary.equals("")) {
                     throw new Exception("error: primaryKey not find." + tablePrimary);
                 }
@@ -502,7 +502,7 @@ public class DBHelper {
                 sqlsb.append(linkTerm);
                 linkTerm = " AND ";
                 //获取主键
-                tablePrimary = SearchTablePrimaryKey(paramModel.db_tableName, paramModel.rsid);
+                tablePrimary =FindTablePrimaryKey(tableIterator); //SearchTablePrimaryKey(paramModel.db_tableName, paramModel.rsid);
                 if (tablePrimary == null || tablePrimary.equals("")) {
                     //return "primaryKey not find";
                     throw new Exception("error: primaryKey not find." + tablePrimary);
@@ -589,7 +589,7 @@ public class DBHelper {
                 sqlsb.append(linkTerm);
                 linkTerm = " AND ";
                 //获取主键
-                tablePrimary = SearchTablePrimaryKey(paramModel.db_tableName, paramModel.rsid);
+                tablePrimary =FindTablePrimaryKey(tableIterator); //SearchTablePrimaryKey(paramModel.db_tableName, paramModel.rsid);
                 if (tablePrimary == null || tablePrimary.equals("")) {
                     //return "primaryKey not find";
                     throw new Exception("error: primaryKey not find." + tablePrimary);
@@ -832,7 +832,6 @@ public class DBHelper {
      * @return
      */
     public static ExecuteResultParam ExecuteSqlSelect(String rsid, String sqlStr) throws Exception {
-        RSLogger.LogInfo("executeSql : " + rsid + " sql: " + sqlStr);
         Connection conn = null;
         Statement stmt = null;
         JSONObject table = null;
@@ -1096,15 +1095,11 @@ public class DBHelper {
 
     private static Set<DBDetailModel> dbModel = new HashSet<>();
 
-    private static ExecuteResultParam loadDBInfo(String rsid) {
-        RSLogger.LogInfo("GetTableInfos : " + rsid);
+    private static ExecuteResultParam loadDBInfo(String rsid) throws Exception {
         Connection conn = null;
         Statement stmt = null;
         ResultSet result = null;
         Set<TableInfoModel> tableInfos = new HashSet<>();
-
-        //Set<TableDetailModel> tableDetails = new HashSet<>();
-        //Set<String> insertSqls = new HashSet<>();
         //获取数据库连接
         try {
             String sqlForTableName = "select ob.* from sysobjects ob where ob.type='U' ";
@@ -1175,8 +1170,10 @@ public class DBHelper {
             return new ExecuteResultParam(0, "success");
             //查询用户表中的column信息
         } catch (Exception e) {
-            RSLogger.ErrorLogInfo(e.getLocalizedMessage());
-            return new ExecuteResultParam(-1, e.getLocalizedMessage());
+            RSLogger.ErrorLogInfo(String.format( "loadDBInfo error %s, rsid :%s,",e.getLocalizedMessage(),rsid),e);
+            RSLogger.SetUpLogInfo(String.format("loadDBInfo error %s, rsid :%s,",e.getLocalizedMessage(),rsid));
+            //return new ExecuteResultParam(-1, e.getLocalizedMessage());
+            throw new Exception(String.format("loadDBInfo error %s, rsid :%s,",e.getLocalizedMessage(),rsid));
         } finally {
             DBHelper.CloseConnection(result, stmt, conn);
         }
@@ -1202,6 +1199,13 @@ public class DBHelper {
         return dbModel;
     }
 
+    /**
+     * 在本地数据库信息中读取 表信息，
+     * @param tableName
+     * @param RSID
+     * @return
+     * @throws Exception 
+     */
     private static Set<TableDetailModel> FindTableDetail(String tableName, String RSID) throws Exception {
         DBDetailModel dbDetailModel = GetRSIDModel(RSID);
         for (TableInfoModel tableInfo : dbDetailModel.dbTableInfos) {
@@ -1212,6 +1216,34 @@ public class DBHelper {
         return null;
     }
 
+      /**
+     * 在本地数据库信息中读取 表主键
+     * @param tableName
+     * @param RSID
+     * @return
+     * @throws Exception 
+     */
+     private static String FindTablePrimaryKey(String tableName, String RSID) throws Exception {
+        Set<TableDetailModel> tableModels= FindTableDetail(tableName,RSID);
+         if (tableModels==null) {
+             return null;
+         }
+         return FindTablePrimaryKey(tableModels);
+    }
+     /**
+      * 在本地数据库信息中读取 表主键
+      * @param tableModel
+      * @return
+      * @throws Exception 
+      */
+     private static String FindTablePrimaryKey(Set<TableDetailModel> tableModel) throws Exception {
+         for (TableDetailModel tempTableModel : tableModel) {
+             if (tempTableModel.isPrimaryKey==true) {
+                 return tempTableModel.name;
+             }
+         }
+         return null;
+    }
     /*
      查询表主键sql语句
      */

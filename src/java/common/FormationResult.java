@@ -5,7 +5,7 @@
  */
 package common;
 
-import common.comInterface.IFormationResult;
+import common.model.ExecuteResultParam;
 import common.model.ResponseResultCode;
 import net.sf.json.JSONObject;
 
@@ -13,59 +13,58 @@ import net.sf.json.JSONObject;
  *
  * @author Administrator
  */
-public class FormationResult implements IFormationResult {
+public class FormationResult {
 
-    @Override
-    public String formationResult(ResponseResultCode resultCode, String errMsg, Object... result) {
+    /**
+     * 
+     * @param resultCode
+     * @param resultParam
+     * @return 
+     */
+    public String formationResult(ResponseResultCode resultCode, ExecuteResultParam resultParam) {
+        return this.formationResult(resultCode, null, null, resultParam);
+    }
+
+    /**
+     * 
+     * @param resultCode
+     * @param token
+     * @param pushId
+     * @param resultParam
+     * @return 
+     */
+    public String formationResult(ResponseResultCode resultCode, String token, String pushId, ExecuteResultParam resultParam) {
+
         JSONObject resultJson = new JSONObject();
         JSONObject resultHeadContext = new JSONObject();
+
         resultHeadContext.accumulate("resultCode", resultCode.toString());
-        resultHeadContext.accumulate("errMsg", errMsg);
-        resultJson.accumulate("head", resultHeadContext);
-        if (result != null) {
-            for (Object result1 : result) {
-                //Object result1 = result[i];
-                resultJson.accumulate("body", result1);
-            }
+        resultHeadContext.accumulate("errMsg", resultParam.errMsg);
+        if (null != token) {
+            resultHeadContext.accumulate("token", token);
         }
-        //resultJson.accumulate("body", result);
+        if (null != pushId) {
+            resultHeadContext.accumulate("pushId", pushId);
+        }
+        
+        resultJson.accumulate("head", resultHeadContext);
+        resultJson.accumulate("body", resultParam.ResultJsonObject);
+        // if error,log information
+        if (ResponseResultCode.Success != resultCode) {
+            common.RSLogger.ErrorLogInfo(resultParam.executeStr, resultParam.exception);
+        }
         return resultJson.toString();
     }
 
-    @Override
-    public String formationResult(ResponseResultCode resultCode, String errMsg, String token, String pushId, Object... result) {
-        JSONObject resultJson = new JSONObject();
-        JSONObject resultHeadContext = new JSONObject();
-        resultHeadContext.accumulate("resultCode", resultCode.toString());
-        resultHeadContext.accumulate("errMsg", errMsg);
-        resultHeadContext.accumulate("token", token);
-        resultHeadContext.accumulate("pushId", pushId);
-        resultJson.accumulate("head", resultHeadContext);
-        if (result != null) {
-            for (Object result1 : result) {
-                //Object result1 = result[i];
-                resultJson.accumulate("body", result1);
-            }
-        }
-        //resultJson.accumulate("body", result);
-        return resultJson.toString();
+    /**
+     * 
+     * @param resultCode
+     * @param token
+     * @param resultParam
+     * @return 
+     */
+    public String formationResult(ResponseResultCode resultCode, String token, ExecuteResultParam resultParam) {
+        return this.formationResult(resultCode, token, null, resultParam);
     }
 
-    @Override
-    public String formationResult(ResponseResultCode resultCode, String errMsg, String token, Object... result) {
-        JSONObject resultJson = new JSONObject();
-        JSONObject resultHeadContext = new JSONObject();
-        resultHeadContext.accumulate("resultCode", resultCode.toString());
-        resultHeadContext.accumulate("errMsg", errMsg);
-        resultHeadContext.accumulate("token", token);
-        resultJson.accumulate("head", resultHeadContext);
-        if (result != null) {
-            for (Object result1 : result) {
-                //Object result1 = result[i];
-                resultJson.accumulate("body", result1);
-            }
-        }
-        //resultJson.accumulate("body", result);
-        return resultJson.toString();
-    }
 }

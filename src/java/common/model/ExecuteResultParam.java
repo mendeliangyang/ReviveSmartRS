@@ -12,6 +12,7 @@ import net.sf.json.JSONObject;
  * @author Administrator
  */
 public class ExecuteResultParam {
+    
     public ExecuteResultParam(){}
     public ExecuteResultParam(int pCode){
         this.ResultCode = pCode;
@@ -25,8 +26,26 @@ public class ExecuteResultParam {
         this.errMsg = pErrMsg;
         this.ResultJsonObject = jsonObject;
     }
+    
+     public ExecuteResultParam(JSONObject jsonObject){
+        this.ResultJsonObject = jsonObject;
+    }
+     
+     
+    public ExecuteResultParam(String pErrMsg,String pExecuteStr){
+        this.errMsg = pErrMsg;
+        this.executeStr = pExecuteStr;
+    }
+    public ExecuteResultParam(String pErrMsg,String pExecuteStr,Exception pException){
+        this.errMsg = pErrMsg;
+        this.executeStr = pExecuteStr;
+        this.exception = pException;
+    }
+    
     public JSONObject ResultJsonObject;
     public int ResultCode;
     public String errMsg;
+    public Exception exception;
+    public String executeStr;
     
 }

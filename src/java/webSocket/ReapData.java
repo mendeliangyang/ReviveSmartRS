@@ -8,7 +8,6 @@ package webSocket;
 import common.DBHelper;
 import common.DeployInfo;
 import common.FormationResult;
-import common.comInterface.IFormationResult;
 import common.model.ExecuteResultParam;
 import common.model.MsgFilterModel;
 import common.model.ResponseResultCode;
@@ -36,7 +35,7 @@ public class ReapData implements Runnable {
 
     @Override
     public void run() {
-        IFormationResult formationResult = null;
+        FormationResult formationResult = null;
         ReviveRSParamModel paramModel = null;
         String strResult = null;
         ExecuteResultParam result = null, result1 = null;
@@ -69,16 +68,16 @@ public class ReapData implements Runnable {
                         JSONObject rowsCount = (JSONObject) iteratorRows.next();
                         result.ResultJsonObject.accumulate("rowsCount", rowsCount.getString("rowsCount"));
                     }
-                    strResult = formationResult.formationResult(ResponseResultCode.Success, result.ResultCode + "","token",msgFilterModel.pushMsgId,  result.ResultJsonObject);
+                    strResult = formationResult.formationResult(ResponseResultCode.Success,"token",msgFilterModel.pushMsgId, new ExecuteResultParam( result.ResultJsonObject));
                 } else {
-                    strResult = formationResult.formationResult(ResponseResultCode.Error, result.errMsg,"token",msgFilterModel.pushMsgId, (Object) null);
+                    strResult = formationResult.formationResult(ResponseResultCode.Error, "token",msgFilterModel.pushMsgId, new ExecuteResultParam(result.errMsg,paramModel.sql));
                 }
             } else {
                 result = DBHelper.ExecuteSqlSelect(paramModel.rsid, DBHelper.SqlSelectCountFactory(paramModel));
                 if (result.ResultCode >= 0) {
-                    strResult = formationResult.formationResult(ResponseResultCode.Success, result.errMsg,"token",msgFilterModel.pushMsgId,  result.ResultJsonObject);
+                    strResult = formationResult.formationResult(ResponseResultCode.Success,"token",msgFilterModel.pushMsgId, new ExecuteResultParam( result.ResultJsonObject));
                 } else {
-                    strResult = formationResult.formationResult(ResponseResultCode.Error, result.errMsg,"token",msgFilterModel.pushMsgId,  (Object) null);
+                    strResult = formationResult.formationResult(ResponseResultCode.Error, "token",msgFilterModel.pushMsgId, new ExecuteResultParam(result.errMsg,paramModel.sql));
                 }
             }
             closeSessions = new HashSet<>();

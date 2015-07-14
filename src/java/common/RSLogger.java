@@ -30,19 +30,49 @@ public class RSLogger {
             //dealLog.log(Level.INFO, logMsg);
         }
     }
-    
-    public static void ErrorLogInfo(String logMsg){
+
+    /**
+     * 错误日志记录
+     *
+     * @param logMsg 错误信息
+     */
+    public static void ErrorLogInfo(String logMsg) {
         if (errLog == null) {
             new RSLogger().RSLoggerInitial();
         }
         if (errLog != null) {
-            System.err.println(logMsg);
             errLog.log(Level.INFO, logMsg);
         }
     }
-    
-    public static void SetUpLogInfo(String logMsg){
-          if (setLog == null) {
+
+    /**
+     * 错误日志记录
+     *
+     * @param strExecute string参数
+     * @param exception 异常信息
+     */
+    public static void ErrorLogInfo(String strExecute, Exception exception) {
+        //todo 目录规则  年/月/日/小时.log
+        if (errLog == null) {
+            new RSLogger().RSLoggerInitial();
+        }
+        if (errLog != null) {
+            StringBuffer sbLog = new StringBuffer();
+            sbLog.append("strParam:").append(strExecute);
+            if (exception != null) {
+                StackTraceElement[] trace = exception.getStackTrace();
+                for (StackTraceElement tempTrace : trace) {
+                    sbLog.append("\r\n").append(tempTrace);
+                }
+            }
+            errLog.log(Level.INFO, sbLog.toString());
+            sbLog.delete(0, sbLog.length());
+            sbLog = null;
+        }
+    }
+
+    public static void SetUpLogInfo(String logMsg) {
+        if (setLog == null) {
             new RSLogger().RSLoggerInitial();
         }
         if (setLog != null) {
@@ -55,9 +85,9 @@ public class RSLogger {
 
         dealLog = Logger.getLogger("dealLog");
         errLog = Logger.getLogger("errorLog");
-        setLog =Logger.getLogger("setupLog");
+        setLog = Logger.getLogger("setupLog");
         setLog.setLevel(Level.ALL);
-        errLog .setLevel(Level.ALL);
+        errLog.setLevel(Level.ALL);
         dealLog.setLevel(Level.INFO);
 
         ConsoleHandler consoleHandler = new ConsoleHandler();
@@ -69,7 +99,7 @@ public class RSLogger {
         ConsoleHandler setHandler = new ConsoleHandler();
         setHandler.setLevel(Level.ALL);
         setLog.addHandler(setHandler);
-                
+
         FileHandler fileHandler = null;
         FileHandler errFileHandler = null;
         FileHandler setFileHandler = null;
@@ -78,13 +108,13 @@ public class RSLogger {
 //			Date nowDate = new Date(); 
 //			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHH");
 //			fileHandler = new FileHandler(DeployInfo.DeployLogPath+"/RSlog"+dateFormat.format( nowDate )+".log");
-            fileHandler = new FileHandler(DeployInfo.GetDeployLogPath() + File.separator+"RSlog.log");
-            errFileHandler = new FileHandler(DeployInfo.GetDeployLogPath() + File.separator+"ErrRSlog.log");
-            setFileHandler = new FileHandler(DeployInfo.GetDeployLogPath() + File.separator+"SetupLog.log");
-            
+            fileHandler = new FileHandler(DeployInfo.GetDeployLogPath() + File.separator + "RSlog.log");
+            errFileHandler = new FileHandler(DeployInfo.GetDeployLogPath() + File.separator + "ErrRSlog.log");
+            setFileHandler = new FileHandler(DeployInfo.GetDeployLogPath() + File.separator + "SetupLog.log");
+
         } catch (Exception e) {
             Logger.getLogger(RSLogger.class.getName()).log(Level.SEVERE, null, e);
-        } 
+        }
         errFileHandler.setLevel(Level.ALL);
         errFileHandler.setFormatter(new MyLogHander());
         errLog.addHandler(errFileHandler);

@@ -6,9 +6,10 @@
 package rsSvc;
 
 import common.DBHelper;
+import common.DeployInfo;
 import common.FormationResult;
 import common.VerificationSign;
-import common.comInterface.IFormationResult;
+import common.model.ExecuteResultParam;
 import common.model.OperateTypeEnum;
 import common.model.ResponseResultCode;
 import common.model.SignModel;
@@ -34,7 +35,7 @@ public class ReviveSign {
      */
     private IAnalyzeReviceParamModel analyzeParamModel = new AnalyzeReviceParamModel();
 
-    private IFormationResult formationResult = new FormationResult();
+    private FormationResult formationResult = new FormationResult();
 
     public ReviveSign() {
     }
@@ -51,11 +52,11 @@ public class ReviveSign {
         StringBuffer sbTemp = null;
         try {
             signModel = analyzeParamModel.transferReviveRSSignModel(param, OperateTypeEnum.signOn);
-            conn = DBHelper.ConnectSybase("ReviveSmartDB");
+            conn = DBHelper.ConnectSybase(DeployInfo.MasterRSID);
             stmt = conn.createStatement();
             if (!common.VerificationSign.verificationSignUser(stmt, signModel.name, signModel.pwd)) {
                 //登录用户名或密码有误
-                return formationResult.formationResult(ResponseResultCode.Error, "登录用户名或密码有误", "", (Object) null);
+                return formationResult.formationResult(ResponseResultCode.Error,new ExecuteResultParam("登录用户名或密码有误", param));
             }
             sbTemp = new StringBuffer();
             sbTemp.append("select count(*) as systemCount from rsSystemUser where rs_SystemName in(");
@@ -73,7 +74,7 @@ public class ReviveSign {
             sbTemp = null;
             if (iFlag != signModel.signOnRSID.size()) {
                 //输入的rsid不正确
-                return formationResult.formationResult(ResponseResultCode.Error, "RSID错误，请联系统系管理员。", "", (Object) null);
+                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("RSID 未授权。",param));
             }
 
             //生成signid
@@ -86,20 +87,20 @@ public class ReviveSign {
                 iFlag = stmt.executeUpdate(strTempSql);
                 if (iFlag < 0) {
                     //delete error
-                    return formationResult.formationResult(ResponseResultCode.Error, "登录失败，数据异常，请稍后重试(D)。", "", (Object) null);
+                    return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("登录失败，数据异常，请稍后重试(D)。",param));
                 }
                 strTempSql = String.format("insert into rsSignRecord (rs_Name ,rs_SystemName,rs_signToken,rs_DeviceType) values('%s','%s','%s',1)", signModel.name, signOnRSID, strTokenTemp);
                 iFlag = stmt.executeUpdate(strTempSql);
                 if (iFlag != 1) {
                     //insert error
-                    return formationResult.formationResult(ResponseResultCode.Error, "登录失败，数据异常，请稍后重试(I)。", "", (Object) null);
+                    return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("登录失败，数据异常，请稍后重试(I)。",param));
                 }
                 strTempSql = null;
             }
-            return formationResult.formationResult(ResponseResultCode.Success, "", strTokenTemp, (Object) null);
+            return formationResult.formationResult(ResponseResultCode.Success, strTokenTemp,  new ExecuteResultParam());
         } catch (Exception ex) {
             common.RSLogger.ErrorLogInfo("ReviveSignOn error." + ex.getLocalizedMessage());
-            return formationResult.formationResult(ResponseResultCode.Error, ex.getLocalizedMessage(), "", (Object) null);
+            return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(ex.getLocalizedMessage(), param,ex));
         } finally {
             DBHelper.CloseConnection(result, stmt, conn);
             if (signModel != null) {
@@ -133,17 +134,17 @@ public class ReviveSign {
         int iFlag = -1;
         try {
             signModel = analyzeParamModel.transferReviveRSSignModel(param, OperateTypeEnum.signOff);
-            conn = DBHelper.ConnectSybase("ReviveSmartDB");
+            conn = DBHelper.ConnectSybase(DeployInfo.MasterRSID);
             stmt = conn.createStatement();
             iFlag = VerificationSign.cancelSignOn(stmt, signModel.token);
             if (iFlag < 0) {
                 //delete error
-                return formationResult.formationResult(ResponseResultCode.Error, "数据异常，请稍后重试(D)。", "", (Object) null);
+                return formationResult.formationResult(ResponseResultCode.Error,new ExecuteResultParam( "数据异常，请稍后重试(D)。", param));
             }
-            return formationResult.formationResult(ResponseResultCode.Success, "", "", (Object) null);
+            return formationResult.formationResult(ResponseResultCode.Success, new ExecuteResultParam());
         } catch (Exception ex) {
             common.RSLogger.ErrorLogInfo("ReviveSignOff error." + ex.getLocalizedMessage());
-            return formationResult.formationResult(ResponseResultCode.Error, ex.getLocalizedMessage(), "", (Object) null);
+            return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(ex.getLocalizedMessage(), param,ex));
         } finally {
             DBHelper.CloseConnection(stmt, conn);
             common.UtileSmart.FreeObjects(signModel);

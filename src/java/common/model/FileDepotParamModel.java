@@ -21,6 +21,23 @@ public class FileDepotParamModel {
     public Set<DepotFileDetailModel> fileDetaile;  //文件信息 。文件名称，文件类型，文件操作是否覆盖
     
     public int selectFlag=0; //查询标记，0，无需构造查询语句无需参照改参数。 1表示按照 fileIds 查询，2表示安装fileTypes 查询
+    
+    public String toStringInformation(){
+        StringBuffer sb = new StringBuffer();
+        sb.append("token:").append(this.token).append("$");
+        sb.append("rsid:").append(this.rsid).append("$");
+        sb.append("ownid:").append(this.ownid).append("$");
+        for (DepotFileDetailModel fileDetaile1 : fileDetaile) {
+            sb.append("fileDetaile.fileName").append(fileDetaile1.fileName).append("$");
+            sb.append("fileDetaile.fileOwnType").append(fileDetaile1.fileOwnType).append("$");
+            sb.append("fileDetaile.fileOperate").append(fileDetaile1.fileOperate).append("$");
+            sb.append("fileDetaile.fileId").append(fileDetaile1.fileId).append("$");
+            sb.append("fileDetaile.fileLocalPath").append(fileDetaile1.fileLocalPath).append("$");
+            sb.append("fileDetaile.fileBase64Value").append(fileDetaile1.fileBase64Value).append("$");
+            sb.append("fileDetaile.fileName").append(fileDetaile1.fileName).append("$");
+        }
+        return sb.toString();
+    }
 
     public FileDepotParamModel() {
         fileDetaile = new HashSet<>();
@@ -58,6 +75,8 @@ public class FileDepotParamModel {
         rsid = null;
         ownid = null;
         fileDetaile = null;
+        fileDetaile.clear();
+        fileDetaile=null;
     }
 
 }

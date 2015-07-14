@@ -34,6 +34,20 @@
         <dbName>microCredit</dbName>
         <dbUser>sa</dbUser>
         <dbpwd>123456</dbpwd>
+        <pushMsg pushId="creditCusInfo1">
+            <dbTable>creditCusInfo</dbTable>
+            <sqlFilter>Mc_cusStatus = '1' or Mc_cusStatus = '-1'</sqlFilter>
+            <pageSize>0</pageSize>
+<!--            <dbColumn>Uphotodata</dbColumn>
+            <dbURLColumn>Uphotodata</dbURLColumn>-->
+        </pushMsg>
+        <pushMsg pushId="creditCusInfo2">
+            <dbTable>creditCusInfo</dbTable>
+            <sqlFilter>Mc_cusStatus = '0'</sqlFilter>
+            <pageSize>0</pageSize>
+<!--            <dbColumn>Uphotodata</dbColumn>
+            <dbURLColumn>Uphotodata</dbURLColumn>-->
+        </pushMsg>
     </systemSet>
     <systemSet id="E_Bank">
         <dbAddress>192.168.100.64</dbAddress>

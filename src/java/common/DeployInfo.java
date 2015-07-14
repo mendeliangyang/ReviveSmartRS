@@ -132,8 +132,9 @@ public class DeployInfo {
             return true;
 
         } catch (Exception ex) {
-            Logger.getLogger(DeployInfo.class.getName()).log(Level.SEVERE, null, ex);
-            throw new Exception("readSetUp error. setUpFilePath :"+fXmlFile);
+            RSLogger.ErrorLogInfo(ex.getLocalizedMessage(), ex);
+            RSLogger.SetUpLogInfo(String.format("readSetUp error. setUpFilePath : %s", fXmlFile) );
+            throw ex;// new Exception("readSetUp error. setUpFilePath :"+fXmlFile);
            // return false;
         } finally {
             fXmlFile = null;
