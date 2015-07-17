@@ -610,7 +610,12 @@ public class DBHelper {
         Set<String> columnsName = null;
         Iterator tableDetailIterator = null;
         DataBaseTypeEnum colunmType = null;
+        //tempTableName 在使用连接池是发现 #temp会出现重复
+        String tempTableName = null;
         try {
+            // temp TableName 生成： 表名秒时间随机数（99）
+            tempTableName = String.format("#t_%s%s%s", paramModel.db_tableName,common.UtileSmart.getCurrentDateSecond(),UtileSmart.getRandomStrbySeed(99));
+            
             tableIterator = FindTableDetail(paramModel.db_tableName, paramModel.rsid);
             identityKeyName = FindTableIdentityKey(tableIterator);
             sqlsb = new StringBuffer();
@@ -643,7 +648,10 @@ public class DBHelper {
                 sqlsb.append(" ,");
             }
 
-            sqlsb.append(" sybid=identity(12) into #temp FROM ");
+            //sqlsb.append(" sybid=identity(12) into #temp FROM ");
+            
+            sqlsb.append(" sybid=identity(12) into ").append(tempTableName).append(" FROM ");
+            
             sqlsb.append(paramModel.db_tableName);
 
             linkTerm = " WHERE ";
@@ -686,7 +694,8 @@ public class DBHelper {
                 pageOffset = paramModel.db_skipNum;
                 topNum = paramModel.db_topNum + paramModel.db_skipNum;
             }
-            sqlsb.append(" select * from #temp where sybid> ");
+            //sqlsb.append(" select * from #temp where sybid> ");
+            sqlsb.append(" select * from ").append(tempTableName).append(" where sybid> ");
             sqlsb.append(pageOffset);
             sqlsb.append(" and sybid <= ");
             sqlsb.append(topNum);
@@ -695,7 +704,7 @@ public class DBHelper {
         } catch (Exception e) {
             throw new Exception("SqlSelectPageFactory error:" + e.getLocalizedMessage());
         } finally {
-            UtileSmart.FreeObjects(tableIterator, identityKeyName, linkTerm, tablePrimary, sqlsb, columnsName, tableDetailIterator, colunmType);
+            UtileSmart.FreeObjects(tableIterator, identityKeyName, linkTerm, tablePrimary, sqlsb, columnsName, tableDetailIterator, colunmType,tempTableName);
         }
 
     }
