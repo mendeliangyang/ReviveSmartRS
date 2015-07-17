@@ -16,32 +16,94 @@ import common.model.TableDetailModel;
 import common.model.SystemSetModel;
 import common.model.TableInfoModel;
 import java.sql.*; // JDBC
-
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties; // Properties
 import java.util.Set;
 import java.util.UUID;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import snaq.db.ConnectionPool;
 
 public class DBHelper {
 
+    private static int ConnectionPoolTimeout = 4000;//4s，超时时间
+    private static int GetConnectionFromPoolTimeout = 10000;//从连接池中获取链接超时时间10s，
+
+    private static Map<String, ConnectionPool> mapConnectionPool = new HashMap<>();
+
+    public static boolean initializePool() throws Exception {
+        //get systemSet    
+        ConnectionPool tempCp = null;
+        StringBuffer temp = new StringBuffer();
+        Set<SystemSetModel> systemSet = DeployInfo.GetSystemSets();
+
+        Class c = Class.forName("com.sybase.jdbc3.jdbc.SybDriver");  // Fill JDBC driver class name here.
+        Driver driver = (Driver) c.newInstance();
+        DriverManager.registerDriver(driver);
+        for (SystemSetModel tempSystemSet : systemSet) {
+//            if (tempSystemSet.id.equals("ElectornicBank") || tempSystemSet.id.equals("microCredit")) {
+            temp.delete(0, temp.length());
+            // Use the Sybase jConnect driver...
+            temp.append("jdbc:sybase:Tds:");
+            // to connect to the supplied machine name...
+            temp.append(tempSystemSet.dbAddress);
+            // on the default port number for ASA...
+            temp.append(":");
+            temp.append(tempSystemSet.dbPort);
+            temp.append("/");
+            //temp.append(":5000/");
+            temp.append(tempSystemSet.dbName);
+            temp.append("?ServiceName=");
+            temp.append(tempSystemSet.dbName);
+            //temp.append("?language=us_english&charset=cp936");
+            // 1:pool-name,2:min,3:max,4:size,5:timeout,6:url,7:name,8:passwd
+            tempCp = new ConnectionPool(tempSystemSet.id, 5, 5, 6, ConnectionPoolTimeout, temp.toString(), tempSystemSet.dbUser, tempSystemSet.dbPwd);
+            tempCp.setAsyncDestroy(true);
+            tempCp.setCaching(false);
+            mapConnectionPool.put(tempSystemSet.id, tempCp);
+//            }
+        }
+        return true;
+    }
+
+    public static Connection GetConnectionFromPool(String rsid) throws Exception {
+        if (mapConnectionPool == null || mapConnectionPool.isEmpty()) {
+            initializePool();
+        }
+        ConnectionPool cp = mapConnectionPool.get(rsid);
+        if (cp == null) {
+            throw new Exception(String.format("GetConnectionFromPool error. can't fund connectionPool by name :'%s'", rsid));
+        }
+        Connection tempCon = cp.getConnection(GetConnectionFromPoolTimeout);
+        if (tempCon == null) {
+            throw new Exception(String.format("Get Connection null,rsid :'%s'", rsid));
+        }
+
+        return tempCon;
+    }
+
     private static Connection ConnectSybase() {
         return DBHelper.ASAConnect("sa", "123456", "192.168.169.217", "AustraliaBank", "5000");
-
         //return DBHelper.ASAConnect("sa", "123456",DeployInfo.GetDBAddress(),DeployInfo.GetDBname());
     }
 
     public static Connection ConnectSybase(String pId) throws Exception {
-//        return DBHelper.ASAConnect("sa", "123456", "192.168.169.217", "AustraliaBank");
-        SystemSetModel setModel = DeployInfo.GetSystemSetsByID(pId);
-        if (setModel == null) {
-            RSLogger.ErrorLogInfo("Could not find the db connection.");
-            return null;
-        }
-        return DBHelper.ASAConnect(setModel.dbUser, setModel.dbPwd, setModel.dbAddress, setModel.dbName, setModel.dbPort);
+        //使用 connectionPool
+//        if (pId.equals("ElectornicBank") || pId.equals("microCredit")) {
+        return GetConnectionFromPool(pId);
+//        }
+
+        //直接jdbc
+//        SystemSetModel setModel = DeployInfo.GetSystemSetsByID(pId);
+//        if (setModel == null) {
+//            RSLogger.ErrorLogInfo("Could not find the db connection.");
+//            return null;
+//        }
+//        return DBHelper.ASAConnect(setModel.dbUser, setModel.dbPwd, setModel.dbAddress, setModel.dbName, setModel.dbPort);
     }
 
     public static void CloseConnection(Statement stmt, Connection connection) {
@@ -115,7 +177,6 @@ public class DBHelper {
             temp.append("?ServiceName=");
             temp.append(DBName);
             // and connect.
-            RSLogger.LogInfo(temp.toString());
             return DriverManager.getConnection(temp.toString(), _props);
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | SQLException e) {
             //e.printStackTrace();
@@ -179,7 +240,7 @@ public class DBHelper {
         try {
             conn = DBHelper.ConnectSybase(RSID);
             stmt = conn.createStatement();
-            result = stmt.executeQuery(SearchTablePrimaryKeyStr);
+            result = stmt.executeQuery(SearchTablePrimaryKeyStrByUserTable);
             while (result.next()) {
                 if (tableName.equals(result.getString("tableName")) && result.getString("indexDescription").indexOf("primary key") > 0) {
                     return result.getString("columnName");
@@ -253,6 +314,9 @@ public class DBHelper {
             primaryKeyName = FindTablePrimaryKey(tableIterator); //SearchTablePrimaryKey(paramModel.db_tableName, paramModel.rsid);
             if (primaryKeyName != null) {
                 primaryColumnDataType = GetColumnType(tableIterator, primaryKeyName);
+            } else {
+                // primaryKeyName ==null
+                throw new Exception(String.format("findtablePrimaryKey is null. tableName is %s,rsid is %s.", paramModel.db_tableName, paramModel.rsid));
             }
             tempSql.append(" INSERT INTO ").append(paramModel.db_tableName).append("( ");
 
@@ -298,7 +362,7 @@ public class DBHelper {
             }
             return sqlResultModel;
         } catch (Exception e) {
-            RSLogger.ErrorLogInfo("SqlInsertFactory error." + e.getMessage());
+            RSLogger.ErrorLogInfo("SqlInsertFactory error." + e.getMessage(), e);
             throw new Exception("SqlInsertFactory error." + e.getMessage());
         } finally {
             tempSql = null;
@@ -502,7 +566,7 @@ public class DBHelper {
                 sqlsb.append(linkTerm);
                 linkTerm = " AND ";
                 //获取主键
-                tablePrimary =FindTablePrimaryKey(tableIterator); //SearchTablePrimaryKey(paramModel.db_tableName, paramModel.rsid);
+                tablePrimary = FindTablePrimaryKey(tableIterator); //SearchTablePrimaryKey(paramModel.db_tableName, paramModel.rsid);
                 if (tablePrimary == null || tablePrimary.equals("")) {
                     //return "primaryKey not find";
                     throw new Exception("error: primaryKey not find." + tablePrimary);
@@ -589,7 +653,7 @@ public class DBHelper {
                 sqlsb.append(linkTerm);
                 linkTerm = " AND ";
                 //获取主键
-                tablePrimary =FindTablePrimaryKey(tableIterator); //SearchTablePrimaryKey(paramModel.db_tableName, paramModel.rsid);
+                tablePrimary = FindTablePrimaryKey(tableIterator); //SearchTablePrimaryKey(paramModel.db_tableName, paramModel.rsid);
                 if (tablePrimary == null || tablePrimary.equals("")) {
                     //return "primaryKey not find";
                     throw new Exception("error: primaryKey not find." + tablePrimary);
@@ -973,7 +1037,7 @@ public class DBHelper {
             table.accumulate(DeployInfo.ResultDataTag, rows);
             //table.accumulate("rowCount", dataIndex);
         } catch (SQLException e) {
-            RSLogger.ErrorLogInfo("ExecuteSqlSelect err sql:" + sqlStr + "exception.msg" + e.getLocalizedMessage());
+            RSLogger.ErrorLogInfo("ExecuteSqlSelect err sql:" + sqlStr + "exception.msg" + e.getLocalizedMessage(), e);
             return new ExecuteResultParam(-1, e.getLocalizedMessage());
         } finally {
             DBHelper.CloseConnection(result, stmt, conn);
@@ -1100,6 +1164,7 @@ public class DBHelper {
         Statement stmt = null;
         ResultSet result = null;
         Set<TableInfoModel> tableInfos = new HashSet<>();
+        StringBuffer sbTempTablePrimaryKey = new StringBuffer();
         //获取数据库连接
         try {
             String sqlForTableName = "select ob.* from sysobjects ob where ob.type='U' ";
@@ -1110,6 +1175,7 @@ public class DBHelper {
             result = stmt.executeQuery(sqlForTableName);
             //ResultSetMetaData rsmd = result.getMetaData();
             //int columnCount = rsmd.getColumnCount();
+            //添加用户表
             TableInfoModel tempTableInfo = null;
             while (result.next()) {
                 tempTableInfo = new TableInfoModel();
@@ -1122,8 +1188,8 @@ public class DBHelper {
                 tableInfos.add(tempTableInfo);
             }
             result.close();
+            //添加用户表的数据类型
             sqlForTableName = String.format("select c.id as id, c.length as length , o.name as tbName , c.name,c.type, c.status,c.usertype  ,t.name as dataTypeName from sysobjects o inner join syscolumns c on c.id = o.id inner join systypes t on t.usertype = c.usertype where o.type = 'U' and o.name in (%s) order by c.id", sqlTableDetailWhere.subSequence(0, sqlTableDetailWhere.lastIndexOf(",")));
-
             ResultSet result1 = stmt.executeQuery(sqlForTableName);
             TableDetailModel tempTabelDetail = null;
             while (result1.next()) {
@@ -1140,16 +1206,26 @@ public class DBHelper {
             }
             result1.close();
             String tempPrimaryName = null;
-            ResultSet result2 = stmt.executeQuery(SearchTablePrimaryKeyStr);
+            ResultSet result2 = stmt.executeQuery(SearchTablePrimaryKeyStrByUserTable);
+//            while (result.next()) {
+//                if (tableName.equals(result.getString("tableName")) && result.getString("indexDescription").indexOf("primary key") > 0) {
+//                    return result.getString("columnName");
+//                }
+//            }
             for (TableInfoModel tableInfo : tableInfos) {
+                sbTempTablePrimaryKey.delete(0, sbTempTablePrimaryKey.length());
                 while (result2.next()) {
+                    sbTempTablePrimaryKey.append(String.format("tableName is %s , rsid is %s，current tableName:%s,indexDescription:%s", tableInfo.tbName, rsid, result2.getString("tableName"), result2.getString("indexDescription")));
                     if (tableInfo.tbName.equals(result2.getString("tableName")) && result2.getString("indexDescription").indexOf("primary key") > 0) {
                         tempPrimaryName = result2.getString("columnName");
                         break;
                     }
                 }
                 if (tempPrimaryName == null || tempPrimaryName.isEmpty()) {
-                    continue;
+                    common.RSLogger.SetUpLogInfo(sbTempTablePrimaryKey.toString());
+                    common.RSLogger.SetUpLogInfo(String.format("loadDBInformation error tableName is %s , rsid is %s", tableInfo.tbName, rsid));
+                    throw new Exception(String.format("loadDBInformation error tableName is %s , rsid is %s", tableInfo.tbName, rsid));
+                    //continue;
                 }
                 for (TableDetailModel tableDetail : tableInfo.tableDetails) {
                     if (tableDetail.name.equals(tempPrimaryName)) {
@@ -1159,6 +1235,9 @@ public class DBHelper {
                     }
                 }
             }
+
+            sbTempTablePrimaryKey.delete(0, sbTempTablePrimaryKey.length());
+            sbTempTablePrimaryKey = null;
             result2.close();
             DBDetailModel dbDetailModel = new DBDetailModel();
             dbDetailModel.rsId = rsid;
@@ -1167,20 +1246,21 @@ public class DBHelper {
             dbModel.add(dbDetailModel);
             dbDetailModel = null;
             tableInfos = null;
+            RSLogger.SetUpLogInfo(String.format("loadDBInfo success rsid :%s,", rsid));
             return new ExecuteResultParam(0, "success");
             //查询用户表中的column信息
         } catch (Exception e) {
-            RSLogger.ErrorLogInfo(String.format( "loadDBInfo error %s, rsid :%s,",e.getLocalizedMessage(),rsid),e);
-            RSLogger.SetUpLogInfo(String.format("loadDBInfo error %s, rsid :%s,",e.getLocalizedMessage(),rsid));
+            RSLogger.ErrorLogInfo(String.format("loadDBInfo error %s, rsid :%s,", e.getLocalizedMessage(), rsid), e);
+            RSLogger.SetUpLogInfo(String.format("loadDBInfo error %s, rsid :%s,", e.getLocalizedMessage(), rsid));
             //return new ExecuteResultParam(-1, e.getLocalizedMessage());
-            throw new Exception(String.format("loadDBInfo error %s, rsid :%s,",e.getLocalizedMessage(),rsid));
+            throw new Exception(String.format("loadDBInfo error %s, rsid :%s,", e.getLocalizedMessage(), rsid));
         } finally {
             DBHelper.CloseConnection(result, stmt, conn);
         }
     }
 
     private static DBDetailModel GetRSIDModel(String rsid) throws Exception {
-        LoadDBInfo();
+        // LoadDBInfo();
         for (DBDetailModel next : dbModel) {
             if (next.rsId.equals(rsid)) {
                 return next;
@@ -1189,22 +1269,27 @@ public class DBHelper {
         return null;
     }
 
-    private static Set<DBDetailModel> LoadDBInfo() throws Exception {
-        if (dbModel.isEmpty()) {
-            Set<SystemSetModel> modelSet = DeployInfo.GetSystemSets();
-            for (SystemSetModel next : modelSet) {
-                loadDBInfo(next.id);
+    public static boolean LoadDBInfo() throws Exception {
+        if (dbModel != null) {
+            for (DBDetailModel dbModel1 : dbModel) {
+                dbModel1.clear();
             }
+            dbModel.clear();
         }
-        return dbModel;
+        Set<SystemSetModel> modelSet = DeployInfo.GetSystemSets();
+        for (SystemSetModel next : modelSet) {
+            loadDBInfo(next.id);
+        }
+        return true;
     }
 
     /**
      * 在本地数据库信息中读取 表信息，
+     *
      * @param tableName
      * @param RSID
      * @return
-     * @throws Exception 
+     * @throws Exception
      */
     private static Set<TableDetailModel> FindTableDetail(String tableName, String RSID) throws Exception {
         DBDetailModel dbDetailModel = GetRSIDModel(RSID);
@@ -1216,33 +1301,36 @@ public class DBHelper {
         return null;
     }
 
-      /**
+    /**
      * 在本地数据库信息中读取 表主键
+     *
      * @param tableName
      * @param RSID
      * @return
-     * @throws Exception 
+     * @throws Exception
      */
-     private static String FindTablePrimaryKey(String tableName, String RSID) throws Exception {
-        Set<TableDetailModel> tableModels= FindTableDetail(tableName,RSID);
-         if (tableModels==null) {
-             return null;
-         }
-         return FindTablePrimaryKey(tableModels);
+    private static String FindTablePrimaryKey(String tableName, String RSID) throws Exception {
+        Set<TableDetailModel> tableModels = FindTableDetail(tableName, RSID);
+        if (tableModels == null) {
+            return null;
+        }
+        return FindTablePrimaryKey(tableModels);
     }
-     /**
-      * 在本地数据库信息中读取 表主键
-      * @param tableModel
-      * @return
-      * @throws Exception 
-      */
-     private static String FindTablePrimaryKey(Set<TableDetailModel> tableModel) throws Exception {
-         for (TableDetailModel tempTableModel : tableModel) {
-             if (tempTableModel.isPrimaryKey==true) {
-                 return tempTableModel.name;
-             }
-         }
-         return null;
+
+    /**
+     * 在本地数据库信息中读取 表主键
+     *
+     * @param tableModel
+     * @return
+     * @throws Exception
+     */
+    private static String FindTablePrimaryKey(Set<TableDetailModel> tableModel) throws Exception {
+        for (TableDetailModel tempTableModel : tableModel) {
+            if (tempTableModel.isPrimaryKey == true) {
+                return tempTableModel.name;
+            }
+        }
+        return null;
     }
     /*
      查询表主键sql语句
@@ -1261,6 +1349,20 @@ public class DBHelper {
             + "'indexName' = name\n"
             + "from sysindexes sc where  (sc.status & 64) = 0 \n"
             + "order by sc.id";
+    private static final String SearchTablePrimaryKeyStrByUserTable = "select 'tableName' = object_name(sc.id),\n"
+            + "'columnName' = index_col(object_name(sc.id),sc.indid,1),\n"
+            + "'indexDescription' = convert(varchar(210), case when (sc.status & 16)<>0 then 'clustered' else 'nonclustered' end\n"
+            + "+ case when (sc.status & 1)<>0 then ', '+'ignore duplicate keys' else '' end\n"
+            + "+ case when (sc.status & 2)<>0 then ', '+'unique' else '' end\n"
+            + "+ case when (sc.status & 4)<>0 then ', '+'ignore duplicate rows' else '' end\n"
+            + "+ case when (sc.status & 64)<>0 then ', '+'statistics' else case when (status & 32)<>0 then ', '+'hypothetical' else '' end end\n"
+            + "+ case when (sc.status & 2048)<>0 then ', '+'primary key' else '' end\n"
+            + "+ case when (sc.status & 4096)<>0 then ', '+'unique key' else '' end\n"
+            + "+ case when (sc.status & 8388608)<>0 then ', '+'auto create' else '' end\n"
+            + "+ case when (sc.status & 16777216)<>0 then ', '+'stats no recompute' else '' end),\n"
+            + "'indexName' = name\n"
+            + "from sysindexes sc where  (sc.status & 64) = 0  and object_name(sc.id) in (select ob.name from sysobjects ob where ob.type='U' )\n"
+            + "order by sc.id ";
     /*
      查询表identity列sql语句
      */

@@ -5,7 +5,6 @@
  */
 package common.model;
 
-import common.model.TableInfoModel;
 import java.util.Set;
 
 /**
@@ -13,8 +12,11 @@ import java.util.Set;
  * @author Administrator
  */
 public class DBDetailModel {
-    public DBDetailModel(){}
-    public DBDetailModel(String pdbName,String prsId,Set<TableInfoModel> pTableInfos){
+
+    public DBDetailModel() {
+    }
+
+    public DBDetailModel(String pdbName, String prsId, Set<TableInfoModel> pTableInfos) {
         this.dbName = pdbName;
         this.rsId = prsId;
         this.dbTableInfos = pTableInfos;
@@ -22,4 +24,17 @@ public class DBDetailModel {
     public String dbName;
     public String rsId;
     public Set<TableInfoModel> dbTableInfos;
+
+    public void clear() {
+        dbName = null;
+        rsId = null;
+        if (dbTableInfos != null) {
+            for (TableInfoModel dbTableInfo : dbTableInfos) {
+                dbTableInfo.clear();
+                dbTableInfo = null;
+            }
+            dbTableInfos.clear();
+        }
+    }
+
 }

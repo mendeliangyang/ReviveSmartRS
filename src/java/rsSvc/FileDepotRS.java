@@ -9,7 +9,6 @@ import common.DBHelper;
 import common.DeployInfo;
 import common.FileHelper;
 import common.FormationResult;
-import common.RSLogger;
 import common.model.DepotFileDetailModel;
 import common.model.ExecuteResultParam;
 import common.model.FileDepotParamModel;
@@ -100,6 +99,7 @@ public class FileDepotRS {
                 if (bSvcFileExist) {
                     return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam( "文件已经存在，不能修改。请联系管理员维护附件系统。", param));
                 }
+                
                 //判断数据库是否存在 ownid 和 fpath重复的数据，如果有数据重复不能上传文件
                 resultParam = DBHelper.ExecuteSqlOnceSelect(DeployInfo.MasterRSID, String.format("SELECT COUNT(*) AS ROWSCOUNT FROM FILEDEPOT WHERE OWNID<>'%s' AND FPATH='%s'", paramModel.ownid, sbFilePathTemp.toString()));
                 if (resultParam.ResultCode != 0) {
@@ -111,7 +111,10 @@ public class FileDepotRS {
                         return formationResult.formationResult(ResponseResultCode.Error,new ExecuteResultParam( String.format("‘%s’,该文件名已经存在并于与其他业务数据关联，请修改文件名称重新提交，或者联系管理员维护附件服务器。", strUpFileName), param));
                     }
                 }
-
+                //判断如果类型应该是纯字符串，如果包含 文件路径分隔符(File.separator) 错误路径
+                if (fileDetaile.fileOwnType.indexOf(File.separator)>0) {
+                    return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(String.format("文件类型错误，类型中不应该包含文件分隔符", strUpFileName), paramModel.toStringInformation()) ); 
+                }
                 //调用解析图片方法，返回路径
                 int baseIndex = fileDetaile.fileBase64Value.indexOf(";base64,");
                 if (!FileHelper.ConvertBase64ToImage(fileDetaile.fileBase64Value.substring(baseIndex + 8, fileDetaile.fileBase64Value.length()), strSvcFileLocalName)) {
@@ -367,7 +370,7 @@ public class FileDepotRS {
                     return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(String.format("获取文件‘ %s’的详细参数失败。", strUpFileName), paramModel.toStringInformation()) );
                 }
                 //判断如果类型应该是纯字符串，如果包含 文件路径分隔符(File.separator) 错误路径
-                if (tempFileDetailModel.fileOwnType.indexOf(File.separator)!=0) {
+                if (tempFileDetailModel.fileOwnType.indexOf(File.separator)>0) {
                     return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(String.format("文件类型错误，类型中不应该包含文件分隔符", strUpFileName), paramModel.toStringInformation()) ); 
                 }
                 sbFilePathTemp.append(File.separator).append(tempFileDetailModel.fileOwnType);

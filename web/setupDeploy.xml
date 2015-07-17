@@ -7,73 +7,10 @@
         <dbUser>sa</dbUser>
         <dbpwd>123456</dbpwd>
     </systemSet>
-    <systemSet id="AustraliaBank">
-        <dbAddress>192.168.100.64</dbAddress>
-        <dbPort>5000</dbPort>
-        <dbName>AustraliaBank</dbName>
-        <dbUser>sa</dbUser>
-        <dbpwd>123456</dbpwd>
-        <pushMsg pushId="DebitCardNum1">
-            <dbTable>DebitCard</dbTable>
-            <sqlFilter>Unumber='1'</sqlFilter>
-            <pageSize>0</pageSize>
-<!--            <dbColumn>Uphotodata</dbColumn>
-            <dbURLColumn>Uphotodata</dbURLColumn>-->
-        </pushMsg>
-        <pushMsg pushId="DebitCardNum2">
-            <dbTable>DebitCard</dbTable>
-            <sqlFilter>Unumber='2'</sqlFilter>
-            <pageSize>0</pageSize>
-<!--            <dbColumn>Uphotodata</dbColumn>
-            <dbURLColumn>Uphotodata</dbURLColumn>-->
-        </pushMsg>
-    </systemSet>
-    <systemSet id="microCredit">
-        <dbAddress>192.168.100.64</dbAddress>
-        <dbPort>5000</dbPort>
-        <dbName>microCredit</dbName>
-        <dbUser>sa</dbUser>
-        <dbpwd>123456</dbpwd>
-        <pushMsg pushId="creditCusInfo1">
-            <dbTable>creditCusInfo</dbTable>
-            <sqlFilter>Mc_cusStatus = '1' or Mc_cusStatus = '-1'</sqlFilter>
-            <pageSize>0</pageSize>
-<!--            <dbColumn>Uphotodata</dbColumn>
-            <dbURLColumn>Uphotodata</dbURLColumn>-->
-        </pushMsg>
-        <pushMsg pushId="creditCusInfo2">
-            <dbTable>creditCusInfo</dbTable>
-            <sqlFilter>Mc_cusStatus = '0'</sqlFilter>
-            <pageSize>0</pageSize>
-<!--            <dbColumn>Uphotodata</dbColumn>
-            <dbURLColumn>Uphotodata</dbURLColumn>-->
-        </pushMsg>
-    </systemSet>
-    <systemSet id="E_Bank">
-        <dbAddress>192.168.100.64</dbAddress>
-        <dbPort>5000</dbPort>
-        <dbName>E_Bank</dbName>
-        <dbUser>sa</dbUser>
-        <dbpwd>123456</dbpwd>
-    </systemSet>
     <systemSet id="tempTest">
         <dbAddress>192.168.100.64</dbAddress>
         <dbPort>5000</dbPort>
         <dbName>tempTest</dbName>
-        <dbUser>sa</dbUser>
-        <dbpwd>123456</dbpwd>
-    </systemSet>
-    <systemSet id="zsTong">
-        <dbAddress>192.168.100.64</dbAddress>
-        <dbPort>5000</dbPort>
-        <dbName>zsTong</dbName>
-        <dbUser>sa</dbUser>
-        <dbpwd>123456</dbpwd>
-    </systemSet>
-    <systemSet id="ElectornicBank">
-        <dbAddress>192.168.100.64</dbAddress>
-        <dbPort>5000</dbPort>
-        <dbName>ElectornicBank</dbName>
         <dbUser>sa</dbUser>
         <dbpwd>123456</dbpwd>
     </systemSet>
@@ -84,6 +21,69 @@
         <dbUser>sa</dbUser>
         <dbpwd>123456</dbpwd>
     </systemSet>
+    <systemSet id="E_Bank">
+        <dbAddress>192.168.100.64</dbAddress>
+        <dbPort>5000</dbPort>
+        <dbName>E_Bank</dbName>
+        <dbUser>sa</dbUser>
+        <dbpwd>123456</dbpwd>
+    </systemSet>
+    <systemSet id="AustraliaBank">
+        <dbAddress>192.168.169.217</dbAddress>
+        <dbPort>5000</dbPort>
+        <dbName>AustraliaBank</dbName>
+        <dbUser>sa</dbUser>
+        <dbpwd>123456</dbpwd>
+        <pushMsg pushId="BankCardUnApply">
+            <dbTable>BankCard</dbTable>
+            <sqlFilter>ChandleStatus ='未审批'</sqlFilter>
+            <pageSize>0</pageSize>
+<!--            <dbColumn>Uphotodata</dbColumn>
+            <dbURLColumn>Uphotodata</dbURLColumn>-->
+        </pushMsg>
+       <pushMsg pushId="BankCardApply">
+            <dbTable>BankCard</dbTable>
+            <sqlFilter>ChandleStatus ='已审批'</sqlFilter>
+            <pageSize>0</pageSize>
+<!--            <dbColumn>Uphotodata</dbColumn>
+            <dbURLColumn>Uphotodata</dbURLColumn>-->
+        </pushMsg>
+    </systemSet>
+    <systemSet id="microCredit">
+        <dbAddress>192.168.169.217</dbAddress>
+        <dbPort>5000</dbPort>
+        <dbName>microCredit</dbName>
+        <dbUser>sa</dbUser>
+        <dbpwd>123456</dbpwd>
+        <pushMsg pushId="creditCusInfo1">
+            <dbTable>creditCusInfo</dbTable>
+            <sqlFilter>Mc_cusStatus = '1' or Mc_cusStatus = '-1'</sqlFilter>
+            <pageSize>10</pageSize>
+            <!--            <dbColumn>Uphotodata</dbColumn>
+            <dbURLColumn>Uphotodata</dbURLColumn>-->
+        </pushMsg>
+        <pushMsg pushId="creditCusInfo2">
+            <dbTable>creditCusInfo</dbTable>
+            <sqlFilter>Mc_cusStatus = '0'</sqlFilter>
+            <pageSize>0</pageSize>
+            <!--            <dbColumn>Uphotodata</dbColumn>
+            <dbURLColumn>Uphotodata</dbURLColumn>-->
+        </pushMsg>
+    </systemSet>
+    <systemSet id="ElectornicBank">
+        <dbAddress>192.168.169.217</dbAddress>
+        <dbPort>5000</dbPort>
+        <dbName>ElectornicBank</dbName>
+        <dbUser>sa</dbUser>
+        <dbpwd>123456</dbpwd>
+    </systemSet>
+    <!--<systemSet id="zsTong">
+        <dbAddress>192.168.100.64</dbAddress>
+        <dbPort>5000</dbPort>
+        <dbName>zsTong</dbName>
+        <dbUser>sa</dbUser>
+        <dbpwd>123456</dbpwd>
+    </systemSet>-->
     <httpPath>http://220.231.153.66:80/ReviveSmartRS/</httpPath>
     <httpAddress>220.231.153.66</httpAddress>
     <httpPort>80</httpPort>

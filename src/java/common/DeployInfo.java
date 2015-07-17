@@ -39,7 +39,7 @@ public class DeployInfo {
         MsgFilterModel msgFilter = null;
         Element tempSet = null, tempMsgEle = null, dbColumn = null, dbURLColumn = null;
         try {
-
+            
             fXmlFile = new File(DoGetDelplyRootPath() + File.separator
                     + "setupDeploy.xml");
 

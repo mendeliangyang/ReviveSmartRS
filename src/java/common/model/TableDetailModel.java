@@ -10,22 +10,26 @@ package common.model;
  * @author Administrator
  */
 public class TableDetailModel {
-    public TableDetailModel(){}
-    public TableDetailModel(String pName,String pType,String pStatus,String pUsertype,String ptbId){
-        this.name = pName;
-        this.type = pType;
-        this.status = pStatus;
-        this.usertype = pUsertype;
-        this.tbId = ptbId;
-        this.isPrimaryKey=false;
+
+    public TableDetailModel() {
     }
-    public TableDetailModel(String pName,String pType,String pStatus,String pUsertype,String ptbId,boolean pIsPrimary){
+
+    public TableDetailModel(String pName, String pType, String pStatus, String pUsertype, String ptbId) {
         this.name = pName;
         this.type = pType;
         this.status = pStatus;
         this.usertype = pUsertype;
         this.tbId = ptbId;
-        this.isPrimaryKey=pIsPrimary;
+        this.isPrimaryKey = false;
+    }
+
+    public TableDetailModel(String pName, String pType, String pStatus, String pUsertype, String ptbId, boolean pIsPrimary) {
+        this.name = pName;
+        this.type = pType;
+        this.status = pStatus;
+        this.usertype = pUsertype;
+        this.tbId = ptbId;
+        this.isPrimaryKey = pIsPrimary;
     }
     public String name; //名字
     public String type;//类型
@@ -36,5 +40,15 @@ public class TableDetailModel {
     public DataBaseTypeEnum dataType;//数据类型对应java
     public String strDataType;//
     public boolean isPrimaryKey;//标识该列是不是主键列
-}
 
+    public void clear() {
+        name = null;
+        type = null;
+        status = null;
+        usertype = null;
+        tbId = null;
+        dataLength = null;
+        dataType = null;
+        strDataType = null;
+    }
+}

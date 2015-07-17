@@ -10,7 +10,6 @@ import common.DeployInfo;
 import common.FileHelper;
 import common.FormationResult;
 import common.model.ExecuteResultParam;
-import common.NetHelper;
 import common.RSLogger;
 import common.model.ResponseResultCode;
 import common.UtileSmart;
@@ -58,7 +57,7 @@ public class ReviveRS {
 
     @POST
     @Path("SayHello")
-    public String SayHello() {
+    public String SayHello() throws Exception {
         //DBHelper.ExecuteSql("microCredit", "update abc set a=1");
         // DBHelper.GetTableInfosByDataBase("E_Bank");
 //        String sqlStr = DBHelper.SqlSelectPageFactory("{\"head\": {\"RSID\":\"AustraliaBank\"},\n"
@@ -69,7 +68,14 @@ public class ReviveRS {
 //                + "                }}");
 //        return DeployInfo.DoGetDelplyRootPath() + "   log :" + DeployInfo.DeployLogPath + File.separator + "RSlog.log" + "     FileDepot: " + DeployInfo.DeployFilePath + File.separator;
 //DBHelper.SearchTableIdentityKey("BankCard", "AustraliaBank");
-        return NetHelper.test();
+        RSLogger.ErrorLogInfo("测试写错误日志");
+        RSLogger.LogInfo("测试normal日志写入");
+        RSLogger.SetUpLogInfo("测试setUp日志写入");
+        try {
+            // DBHelper.initializePool();
+        } catch (Exception e) {
+        }
+        return "only test "; //NetHelper.test();
     }
 
     @POST
@@ -185,7 +191,7 @@ public class ReviveRS {
                 //tempBase64
                 int baseIndex = tempBase64.indexOf(";base64,");
                 if (!FileHelper.ConvertBase64ToImage(tempBase64.substring(baseIndex + 8, tempBase64.length()), filePath)) {
-                    return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(key + ": convert image failed", param) );
+                    return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(key + ": convert image failed", param));
                 }
                 //更改values 中的列值
                 if (jsonValues != null && jsonValues.containsKey(key)) {
@@ -196,7 +202,7 @@ public class ReviveRS {
 
             return HandlerBase64FileToDatabase(jsonObj.toString());
         } catch (Exception e) {
-            return formationResult.formationResult(ResponseResultCode.Error,  new ExecuteResultParam(e.getLocalizedMessage(), param,e) );
+            return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(e.getLocalizedMessage(), param, e));
         }
 
     }
@@ -331,12 +337,12 @@ public class ReviveRS {
                     JSONObject rowsCount = (JSONObject) iterator.next();
                     resultParam.ResultJsonObject.accumulate("rowsCount", rowsCount.getString("rowsCount"));
                 }
-                return formationResult.formationResult(ResponseResultCode.Success,  new ExecuteResultParam(resultParam.ResultJsonObject));
+                return formationResult.formationResult(ResponseResultCode.Success, new ExecuteResultParam(resultParam.ResultJsonObject));
             } else {
                 return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(resultParam.errMsg, param));
             }
         } catch (Exception e) {
-            return formationResult.formationResult(ResponseResultCode.Error,  new ExecuteResultParam(e.getLocalizedMessage(), param,e));
+            return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(e.getLocalizedMessage(), param, e));
         } finally {
             if (paramModel != null) {
                 paramModel.destroySelf();
@@ -363,12 +369,12 @@ public class ReviveRS {
             //执行sql查询
             resultParam = DBHelper.ExecuteSqlSelect(paramModel.rsid, sqlStr);
             if (resultParam.ResultCode >= 0) {
-                return formationResult.formationResult(ResponseResultCode.Success, new ExecuteResultParam(resultParam.ResultJsonObject) );
+                return formationResult.formationResult(ResponseResultCode.Success, new ExecuteResultParam(resultParam.ResultJsonObject));
             } else {
-                return formationResult.formationResult(ResponseResultCode.Error,new ExecuteResultParam( resultParam.errMsg, param));
+                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(resultParam.errMsg, param));
             }
         } catch (Exception e) {
-            return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam( e.getLocalizedMessage(), param,e));
+            return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(e.getLocalizedMessage(), param, e));
         } finally {
             if (paramModel != null) {
                 paramModel.destroySelf();
@@ -387,19 +393,19 @@ public class ReviveRS {
 
             boolean isSignOn = common.VerificationSign.verificationSignOn(paramModel.token, paramModel.rsid);
             if (!isSignOn) {
-                return formationResult.formationResult(ResponseResultCode.Error,  new ExecuteResultParam("请您先登录系统。", param));
+                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("请您先登录系统。", param));
             }
 
             resultParam = DBHelper.ExecuteSql(paramModel.rsid, DBHelper.SqlUpdateFactory(paramModel));
 
             if (resultParam.ResultCode >= 0) {
                 JMSQueueMessage.AsyncWriteMessage(paramModel.db_tableName);
-                return formationResult.formationResult(ResponseResultCode.Success,new ExecuteResultParam());
+                return formationResult.formationResult(ResponseResultCode.Success, new ExecuteResultParam());
             } else {
                 return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(resultParam.errMsg, param));
             }
         } catch (Exception e) {
-            return formationResult.formationResult(ResponseResultCode.Error,  new ExecuteResultParam(e.getLocalizedMessage(), param,e));
+            return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(e.getLocalizedMessage(), param, e));
         } finally {
             if (paramModel != null) {
                 paramModel.destroySelf();
@@ -419,16 +425,16 @@ public class ReviveRS {
 
             boolean isSignOn = common.VerificationSign.verificationSignOn(paramModel.token, paramModel.rsid);
             if (!isSignOn) {
-                return formationResult.formationResult(ResponseResultCode.Error,  new ExecuteResultParam("请您先登录系统。", param));
+                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("请您先登录系统。", param));
             }
             resultParam = DBHelper.ExecuteSql(paramModel.rsid, DBHelper.SqlDeleteFactory(paramModel));
             if (resultParam.ResultCode >= 0) {
                 return formationResult.formationResult(ResponseResultCode.Success, new ExecuteResultParam());
             } else {
-                return formationResult.formationResult(ResponseResultCode.Error,new ExecuteResultParam(resultParam.errMsg, param));
+                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(resultParam.errMsg, param));
             }
         } catch (Exception e) {
-            return formationResult.formationResult(ResponseResultCode.Error,new ExecuteResultParam(e.getLocalizedMessage(), param,e));
+            return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(e.getLocalizedMessage(), param, e));
         } finally {
             if (paramModel != null) {
                 paramModel.destroySelf();
@@ -471,12 +477,12 @@ public class ReviveRS {
                     }
                     resultParam.ResultJsonObject.accumulate(DeployInfo.ResultDataTag, resultJson);
                 }
-                return formationResult.formationResult(ResponseResultCode.Success,new ExecuteResultParam(resultParam.ResultJsonObject) );
+                return formationResult.formationResult(ResponseResultCode.Success, new ExecuteResultParam(resultParam.ResultJsonObject));
             } else {
                 return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(resultParam.errMsg, param));
             }
         } catch (Exception e) {
-            return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(e.getLocalizedMessage(), param,e));
+            return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(e.getLocalizedMessage(), param, e));
         } finally {
             if (paramModel != null) {
                 paramModel.destroySelf();
@@ -492,12 +498,12 @@ public class ReviveRS {
         try {
             resultParam = DBHelper.GetTableInfosByDataBase(JSONObject.fromObject(param).getJSONObject("head").getString("RSID"));
             if (resultParam.ResultCode >= 0) {
-                return formationResult.formationResult(ResponseResultCode.Success,new ExecuteResultParam());
+                return formationResult.formationResult(ResponseResultCode.Success, new ExecuteResultParam());
             } else {
                 return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(resultParam.errMsg, param));
             }
         } catch (Exception e) {
-            return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(e.getLocalizedMessage(),param,e));
+            return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(e.getLocalizedMessage(), param, e));
         } finally {
             UtileSmart.FreeObjects(resultParam, param);
         }

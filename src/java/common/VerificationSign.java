@@ -40,7 +40,7 @@ public class VerificationSign {
         Time rs_SignTime = null, nowTime = null;
         int iFlag = -1;
         try {
-            conn = DBHelper.ConnectSybase("ReviveSmartDB");
+            conn = DBHelper.ConnectSybase(DeployInfo.MasterRSID);
             stmt = conn.createStatement();
             strTempSql = "select getdate() as nowDate ";
             result = stmt.executeQuery(strTempSql);
@@ -131,7 +131,7 @@ public class VerificationSign {
         Connection conn = null;
         Statement stmt = null;
         try {
-            conn = DBHelper.ConnectSybase("ReviveSmartDB");
+            conn = DBHelper.ConnectSybase(DeployInfo.MasterRSID);
             stmt = conn.createStatement();
             result = stmt.executeQuery(String.format("SELECT count(*) as isExist FROM dbo.rsUser where rs_Name = '%s' and rs_Pwd= '%s'", rs_user, rs_pwd));
             result.next();

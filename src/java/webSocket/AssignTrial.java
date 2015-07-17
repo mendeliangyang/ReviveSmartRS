@@ -67,20 +67,19 @@ public class AssignTrial {
 
     @OnMessage
     public void onMessage(Session session, String msgParam) {
-        System.out.println("AssignTrial onMessage " + session.getId() + " msg: " + msgParam);
+        common.RSLogger.LogInfo(String.format("onMessage： receive the message form %s :%s", session.getId(),msgParam));
         try {
             MsgClientPush msgClient = analyzeMsg.transferMsg(msgParam);
             FormationResult formationResult = new FormationResult();
             if (msgClient == null) {
-               WebSocketHelper.sendTextToClient(session, formationResult.formationResult(ResponseResultCode.Error,new ExecuteResultParam("解析参数失败", msgParam)));
+                WebSocketHelper.sendTextToClient(session, formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("解析参数失败", msgParam)));
                 return;
             }
             //todo 验证用户名密码
-            if(!VerificationSign.verificationSignUser(msgClient.userName,msgClient.userPwd)){
-                WebSocketHelper.sendTextToClient(session, formationResult.formationResult(ResponseResultCode.Error,new ExecuteResultParam("用户名或密码错误", msgParam)));
+            if (!VerificationSign.verificationSignUser(msgClient.userName, msgClient.userPwd)) {
+                WebSocketHelper.sendTextToClient(session, formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("用户名或密码错误", msgParam)));
                 return;
             }
-            
             for (MsgFilterModel msgFilterModel : pushMap.keySet()) {
                 for (String clientPushMsgId : msgClient.pushIds) {
                     if (msgFilterModel.pushMsgId.equals(clientPushMsgId)) {
@@ -93,28 +92,29 @@ public class AssignTrial {
                     }
                 }
             }
+            //发送注册成功消息
+            WebSocketHelper.sendTextToClient(session, formationResult.formationResult(ResponseResultCode.Success, new ExecuteResultParam()));
         } catch (Exception e) {
-            common.RSLogger.ErrorLogInfo("webSocket onMessage error." + e.getLocalizedMessage());
+            common.RSLogger.ErrorLogInfo("webSocket onMessage error." + e.getLocalizedMessage(), e);
             System.out.printf(e.getLocalizedMessage());
         }
     }
 
     @OnError
     public void onError(Session session, Throwable t) {
-        common.RSLogger.ErrorLogInfo("AssignTrial onError" + t.getLocalizedMessage());
-        System.out.println("AssignTrial onError" + session.getId() + "error");
+        common.RSLogger.ErrorLogInfo("AssignTrial onError" + t.getLocalizedMessage(), new Exception(t));
     }
 
     @OnOpen
     public void onOpen(Session session) {
         //peers.add(session);
-        System.out.println("AssignTrial onOpen" + session.getId() + "open");
+        common.RSLogger.LogInfo(String.format("AssignTrial onOpen '%s' open", session.getId()));
     }
 
     @OnClose
     public void onClose(Session session) {
         //peers.remove(session);
-        System.out.println("AssignTrial onClose" + session.getId() + "close");
+        common.RSLogger.LogInfo(String.format("AssignTrial onClose '%s' close", session.getId()));
     }
 
 }

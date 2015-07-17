@@ -19,10 +19,38 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class ReadDeploySetServlet extends HttpServlet {
 
-    public ReadDeploySetServlet() throws Exception  {
-        if(!DeployInfo.readSetUp()){
-            throw new Exception("load deployInfo failed,check log. "+DeployInfo.DeployRootPath+".");
+    public ReadDeploySetServlet() {
+        try {
+            if (!DeployInfo.readSetUp()) {
+                throw new Exception("load deployInfo failed,check log. " + DeployInfo.DeployRootPath + ".");
+            }
+        } catch (Exception e) {
+            common.RSLogger.SetUpLogInfo(String.format("start service error step readSetUp ,%s", e.getLocalizedMessage()));
+            common.RSLogger.ErrorLogInfo(String.format("start service error step readSetUp ,%s", e.getLocalizedMessage()), e);
         }
+        try {
+            common.RSLogger.Initial();
+        } catch (Exception e) {
+            common.RSLogger.SetUpLogInfo(String.format("start service error step RSLogger.Initial ,%s", e.getLocalizedMessage()));
+            common.RSLogger.ErrorLogInfo(String.format("start service error step RSLogger.Initial ,%s", e.getLocalizedMessage()), e);
+        }
+        try {
+            if (!common.DBHelper.initializePool()) {
+                throw new Exception("db initializePool error .");
+            }
+        } catch (Exception e) {
+            common.RSLogger.SetUpLogInfo(String.format("start service error step initializePool,%s", e.getLocalizedMessage()));
+            common.RSLogger.ErrorLogInfo(String.format("start service error step initializePool,%s", e.getLocalizedMessage()), e);
+        }
+        try {
+            if (!common.DBHelper.LoadDBInfo()) {
+                throw new Exception("readDBInformation error.");
+            }
+        } catch (Exception e) {
+            common.RSLogger.SetUpLogInfo(String.format("start service error step readDBInformation,%s", e.getLocalizedMessage()));
+            common.RSLogger.ErrorLogInfo(String.format("start service error step readDBInformation,%s", e.getLocalizedMessage()), e);
+        }
+
     }
 
     /**
@@ -36,23 +64,14 @@ public class ReadDeploySetServlet extends HttpServlet {
      */
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException, Exception {
-        if(!DeployInfo.readSetUp()){
-            throw new Exception("server started up read SetUp file. "+DeployInfo.DeployRootPath+".");
-        }
-        
-        
-        response.setContentType("text/html;charset=UTF-8");
-        try (PrintWriter out = response.getWriter()) {
-            /* output your page here. You may use following sample code. */
-            out.println("<!DOCTYPE html>");
-            out.println("<html>");
-            out.println("<head>");
-            out.println("<title>Servlet ReadDeploySetServlet</title>");
-            out.println("</head>");
-            out.println("<body>");
-            out.println("<h1>Servlet ReadDeploySetServlet at " + request.getContextPath() + "</h1>");
-            out.println("</body>");
-            out.println("</html>");
+        try {
+            if (!common.DBHelper.LoadDBInfo()) {
+                throw new Exception("readDBInformation error.");
+            }
+            response.getWriter().print("reload the database information to complete .");
+        } catch (Exception e) {
+            common.RSLogger.SetUpLogInfo(String.format("reLoad db information error step readDBInformation,%s", e.getLocalizedMessage()));
+            common.RSLogger.ErrorLogInfo(String.format("reLoad db information error step readDBInformation,%s", e.getLocalizedMessage()), e);
         }
     }
 
@@ -68,13 +87,13 @@ public class ReadDeploySetServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         try {
             processRequest(request, response);
         } catch (Exception ex) {
-            throw new ServletException("load deployInfo failed,check log. "+DeployInfo.DeployRootPath+"."+ex.getLocalizedMessage());
+            throw new ServletException("load deployInfo failed,check log. " + DeployInfo.DeployRootPath + "." + ex.getLocalizedMessage());
         }
-        
+
     }
 
     /**
@@ -88,10 +107,10 @@ public class ReadDeploySetServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-       try {
+        try {
             processRequest(request, response);
         } catch (Exception ex) {
-            throw new ServletException("load deployInfo failed,check log. "+DeployInfo.DeployRootPath+"."+ex.getLocalizedMessage());
+            throw new ServletException("load deployInfo failed,check log. " + DeployInfo.DeployRootPath + "." + ex.getLocalizedMessage());
         }
     }
 

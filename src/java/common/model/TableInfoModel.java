@@ -13,8 +13,11 @@ import java.util.Set;
  * @author Administrator
  */
 public class TableInfoModel {
-    public TableInfoModel(){}
-    public TableInfoModel(String ptbName,String ptbId, Set<TableDetailModel> ptableDetails){
+
+    public TableInfoModel() {
+    }
+
+    public TableInfoModel(String ptbName, String ptbId, Set<TableDetailModel> ptableDetails) {
         this.tbName = ptbName;
         this.tbId = ptbId;
         this.tableDetails = ptableDetails;
@@ -22,5 +25,18 @@ public class TableInfoModel {
     public TableDetailModel tbPrimaryKey;
     public String tbName;
     public String tbId;
-    public Set<TableDetailModel> tableDetails=new HashSet<>();
+    public Set<TableDetailModel> tableDetails = new HashSet<>();
+
+    public void clear() {
+        tbName = null;
+        tbId = null;
+        if (tableDetails != null) {
+            for (TableDetailModel tableDetail : tableDetails) {
+                tableDetail.clear();
+                tableDetail = null;
+            }
+            tableDetails.clear();
+        }
+
+    }
 }

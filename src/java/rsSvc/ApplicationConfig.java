@@ -8,7 +8,6 @@ package rsSvc;
 import java.util.Set;
 import javax.ws.rs.core.Application;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
-
 /**
  *
  * @author Administrator
@@ -21,6 +20,7 @@ public class ApplicationConfig extends Application {
         Set<Class<?>> resources = new java.util.HashSet<>();
         addRestResourceClasses(resources);
         resources.add(MultiPartFeature.class);
+        //resources.add(org.slf4j.LoggerFactory);//org/slf4j/LoggerFactory
         return resources;
     }
 
