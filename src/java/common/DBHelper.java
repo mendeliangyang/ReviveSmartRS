@@ -300,51 +300,59 @@ public class DBHelper {
         StringBuffer tempSql = new StringBuffer();
         StringBuffer tempColumn = new StringBuffer();
         StringBuffer tempValue = new StringBuffer();
-        String identityKeyName = null, primaryKeyName = null, strUUIDTemp = null;
-        boolean primaryColumnHasValue = true;
+        String identityKeyName = null, strUUIDTemp = null;
         SqlFactoryResultModel sqlResultModel = new SqlFactoryResultModel();
         DataBaseTypeEnum primaryColumnDataType = null;
+        TableInfoModel pTableInfo = null;
+        TableDetailModel tempTableColumnDetail = null;
+        boolean primaryColumnHasValue = true;
         try {
-            Set tableIterator = FindTableDetail(paramModel.db_tableName, paramModel.rsid);
 
-            identityKeyName = FindTableIdentityKey(tableIterator);
+            pTableInfo = FindTableInformation(paramModel.db_tableName, paramModel.rsid);
+
+            if (pTableInfo == null) {
+                throw new Exception(String.format("could not find table's %s information.rsid's %s", paramModel.db_tableName, paramModel.rsid));
+            }
+
+            //Set tableIterator = FindTableDetail(paramModel.db_tableName, paramModel.rsid);
+            //get identityKey , set inserted and get identity.
+            identityKeyName = pTableInfo.identityKey.name; // FindTableIdentityKey(pTableInfo.tableDetails);
+
             if (identityKeyName != null) {
                 tempSql.append("SET NOCOUNT ON ");
             }
-            primaryKeyName = FindTablePrimaryKey(tableIterator); //SearchTablePrimaryKey(paramModel.db_tableName, paramModel.rsid);
-            if (primaryKeyName != null) {
-                primaryColumnDataType = GetColumnType(tableIterator, primaryKeyName);
-            } else {
-                // primaryKeyName ==null
-                throw new Exception(String.format("findtablePrimaryKey is null. tableName is %s,rsid is %s.", paramModel.db_tableName, paramModel.rsid));
-            }
+
             tempSql.append(" INSERT INTO ").append(paramModel.db_tableName).append("( ");
 
             Iterator keys = paramModel.db_valueColumns.keySet().iterator();
-            //在循环中判断，如果主键类型是varchar，但是在没有传入值，默认生成一个 uuid 填充
             while (keys.hasNext()) {
                 String key = (String) keys.next();
-
                 tempColumn.append(key).append(" ,");
-                DataBaseTypeEnum colunmType = GetColumnType(tableIterator, key);
-                if (primaryKeyName.equals(key)) {
-                    primaryColumnHasValue = false;
-                }
-                if (colunmType == DataBaseTypeEnum.number || colunmType == DataBaseTypeEnum.decimal) {
+                tempTableColumnDetail = pTableInfo.getColumnDetail(key);
+                if (tempTableColumnDetail.dataType == DataBaseTypeEnum.number || tempTableColumnDetail.dataType == DataBaseTypeEnum.decimal) {
                     tempValue.append(" ").append(paramModel.db_valueColumns.get(key)).append(" ,");
-                } else if (colunmType == DataBaseTypeEnum.charset || colunmType == DataBaseTypeEnum.date || colunmType == DataBaseTypeEnum.time || colunmType == DataBaseTypeEnum.datetime) {
+                } else if (tempTableColumnDetail.dataType == DataBaseTypeEnum.charset || tempTableColumnDetail.dataType == DataBaseTypeEnum.date || tempTableColumnDetail.dataType == DataBaseTypeEnum.time || tempTableColumnDetail.dataType == DataBaseTypeEnum.datetime) {
                     tempValue.append("'").append(paramModel.db_valueColumns.get(key)).append("' ,");
                 } else {
                     throw new Exception("error: columnTypeUnknown  key." + key);
                 }
+                //primaryColumnHasValue  params has primary value，don't need uuid
+                if (pTableInfo.CheckColumnIsPrimary(key)) {
+                    primaryColumnHasValue = false;
+                }
                 key = null;
             }
+            // qualification 1 primariy column no value , 2 primary column data type is charset, 3 primary column is  single column
             if (primaryColumnHasValue && primaryColumnDataType != null && primaryColumnDataType == DataBaseTypeEnum.charset) {
-                sqlResultModel.columnValue = new CollectionsUtils.ConstMap<>();
-                strUUIDTemp = UUID.randomUUID().toString();
-                sqlResultModel.columnValue.put(primaryKeyName, strUUIDTemp);
-                tempSql.append(tempColumn).append(primaryKeyName).append(" ) VALUES (");
-                tempSql.append(tempValue).append("'").append(strUUIDTemp).append("'").append(")");
+                TableDetailModel singlePrimary = pTableInfo.getPrimariyColumn();
+                if (singlePrimary != null) {
+                    sqlResultModel.columnValue = new CollectionsUtils.ConstMap<>();
+                    strUUIDTemp = UUID.randomUUID().toString();
+                    sqlResultModel.columnValue.put(singlePrimary.name, strUUIDTemp);
+                    tempSql.append(tempColumn).append(singlePrimary.name).append(" ) VALUES (");
+                    tempSql.append(tempValue).append("'").append(strUUIDTemp).append("'").append(")");
+                }
+
             } else {
                 tempSql.append(tempColumn.substring(0, tempColumn.length() - 1)).append(" ) VALUES (");
                 tempSql.append(tempValue.substring(0, tempValue.length() - 1)).append(")");
@@ -353,13 +361,8 @@ public class DBHelper {
             if (identityKeyName != null) {
                 tempSql.append(" SELECT @@IDENTITY AS ").append(identityKeyName);
             }
-
             RSLogger.LogInfo(tempSql.toString());
-
             sqlResultModel.strSql = tempSql.toString();
-            if (primaryColumnHasValue) {
-
-            }
             return sqlResultModel;
         } catch (Exception e) {
             RSLogger.ErrorLogInfo("SqlInsertFactory error." + e.getMessage(), e);
@@ -614,8 +617,8 @@ public class DBHelper {
         String tempTableName = null;
         try {
             // temp TableName 生成： 表名秒时间随机数（99）
-            tempTableName = String.format("#t_%s%s%s", paramModel.db_tableName,common.UtileSmart.getCurrentDateSecond(),UtileSmart.getRandomStrbySeed(99));
-            
+            tempTableName = String.format("#t_%s%s%s", paramModel.db_tableName, common.UtileSmart.getCurrentDateSecond(), UtileSmart.getRandomStrbySeed(99));
+
             tableIterator = FindTableDetail(paramModel.db_tableName, paramModel.rsid);
             identityKeyName = FindTableIdentityKey(tableIterator);
             sqlsb = new StringBuffer();
@@ -649,9 +652,8 @@ public class DBHelper {
             }
 
             //sqlsb.append(" sybid=identity(12) into #temp FROM ");
-            
             sqlsb.append(" sybid=identity(12) into ").append(tempTableName).append(" FROM ");
-            
+
             sqlsb.append(paramModel.db_tableName);
 
             linkTerm = " WHERE ";
@@ -704,7 +706,7 @@ public class DBHelper {
         } catch (Exception e) {
             throw new Exception("SqlSelectPageFactory error:" + e.getLocalizedMessage());
         } finally {
-            UtileSmart.FreeObjects(tableIterator, identityKeyName, linkTerm, tablePrimary, sqlsb, columnsName, tableDetailIterator, colunmType,tempTableName);
+            UtileSmart.FreeObjects(tableIterator, identityKeyName, linkTerm, tablePrimary, sqlsb, columnsName, tableDetailIterator, colunmType, tempTableName);
         }
 
     }
@@ -1211,6 +1213,9 @@ public class DBHelper {
                 tempTabelDetail.dataType = GetColumnType(tempTabelDetail.strDataType);
                 tempTabelDetail.status = result1.getString("status");
                 TableInfoModel temptableInfo = GetTabelInfoByLocal(tableInfos, tempTabelDetail.tbId);
+                if (tempTabelDetail.status.equals("128")) {
+                    temptableInfo.identityKey = tempTabelDetail;
+                }
                 temptableInfo.tableDetails.add(tempTabelDetail);
             }
             result1.close();
@@ -1239,7 +1244,8 @@ public class DBHelper {
                 for (TableDetailModel tableDetail : tableInfo.tableDetails) {
                     if (tableDetail.name.equals(tempPrimaryName)) {
                         tableDetail.isPrimaryKey = true;
-                        tableInfo.tbPrimaryKey = tableDetail;
+                        //tableInfo.tbPrimaryKey = tableDetail;
+                        tableInfo.tbPrimaryKeys.add(tableDetail);
                         break;
                     }
                 }
@@ -1311,6 +1317,24 @@ public class DBHelper {
     }
 
     /**
+     * 在本地数据库信息中读取 表信息，
+     *
+     * @param tableName
+     * @param RSID
+     * @return
+     * @throws Exception
+     */
+    private static TableInfoModel FindTableInformation(String tableName, String RSID) throws Exception {
+        DBDetailModel dbDetailModel = GetRSIDModel(RSID);
+        for (TableInfoModel tableInfo : dbDetailModel.dbTableInfos) {
+            if (tableInfo.tbName.equals(tableName)) {
+                return tableInfo;
+            }
+        }
+        return null;
+    }
+
+    /**
      * 在本地数据库信息中读取 表主键
      *
      * @param tableName
@@ -1334,6 +1358,22 @@ public class DBHelper {
      * @throws Exception
      */
     private static String FindTablePrimaryKey(Set<TableDetailModel> tableModel) throws Exception {
+        for (TableDetailModel tempTableModel : tableModel) {
+            if (tempTableModel.isPrimaryKey == true) {
+                return tempTableModel.name;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 在本地数据库信息中读取 表主键
+     *
+     * @param tableModel
+     * @return
+     * @throws Exception
+     */
+    private static String FindTablePrimaryKeys(Set<TableDetailModel> tableModel) throws Exception {
         for (TableDetailModel tempTableModel : tableModel) {
             if (tempTableModel.isPrimaryKey == true) {
                 return tempTableModel.name;
