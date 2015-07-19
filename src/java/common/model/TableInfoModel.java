@@ -48,19 +48,35 @@ public class TableInfoModel {
         }
         return null;
     }
+    
+    /**
+     * get all column name 
+     * @return Set<String>
+     */
+    public Set<String> getColumnsName(){
+        if (tableDetails==null) {
+            return null;
+        }
+        Set<String> columns = new HashSet<>();
+        for (TableDetailModel tableDetail : tableDetails) {
+            columns.add(tableDetail.name);
+        }
+        return columns;
+    }
 
     /**
      * if single primary column return primary column detail 
-     * else not single column reutn null
+     * else not single column throw exception
      *
      * @return primary column detail
+     * @throws java.lang.Exception ,not single column 
      */
-    public TableDetailModel getPrimariyColumn() {
+    public TableDetailModel getPrimariyColumn() throws Exception {
         if (tbPrimaryKeys == null) {
             return null;
         }
         if (tbPrimaryKeys.size() != 1) {
-            return null;
+            throw new Exception(String.format("table:%s,not single primary key.", tbName));
         }
         for (TableDetailModel tbPrimaryKey : tbPrimaryKeys) {
             if (tbPrimaryKey.isPrimaryKey) {

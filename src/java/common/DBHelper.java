@@ -256,39 +256,6 @@ public class DBHelper {
 
     }
 
-    private static String SearchTableIdentityKey(String tableName, String RSID) throws Exception {
-//        String sqlStr = "select object_name(sc.id) as 'tn' , sc.name as 'cn' from syscolumns sc inner join sysobjects so on sc.id = so.id where  so.name='" + tableName + "' and  sc.status =128 ";
-        Connection conn = null;
-        Statement stmt = null;
-        ResultSet result = null;
-        try {
-            conn = DBHelper.ConnectSybase(RSID);
-            stmt = conn.createStatement();
-            result = stmt.executeQuery(String.format(SearchTableIdentityKeyStr, tableName));
-            if (result.next()) {
-                return result.getString("cn");
-            }
-        } catch (SQLException e) {
-            //e.printStackTrace();
-            RSLogger.ErrorLogInfo("SearchTableIdentityKey error" + e.getMessage());
-        } finally {
-            DBHelper.CloseConnection(result, stmt, conn);
-        }
-        return null;
-    }
-
-    private static String FindTableIdentityKey(Set<TableDetailModel> tableDetails) {
-        if (tableDetails == null || tableDetails.isEmpty()) {
-            return null;
-        }
-        for (TableDetailModel tableDetail : tableDetails) {
-            if (tableDetail.status.equals("128")) {
-                return tableDetail.name;
-            }
-        }
-        return null;
-    }
-
     /**
      * 根据传入数据生成插入语句
      *
@@ -486,13 +453,16 @@ public class DBHelper {
         try {
 
             pTableInfo = FindTableInformation(paramModel.db_tableName, paramModel.rsid);
+
+            if (pTableInfo == null) {
+                throw new Exception(String.format("could not find table's %s information.rsid's %s", paramModel.db_tableName, paramModel.rsid));
+            }
             //Set tableIterator = FindTableDetail(paramModel.db_tableName, paramModel.rsid);
             sqlSb.append("DELETE ").append(paramModel.db_tableName).append(" WHERE ");
 
             //判断是否存在主键,存在主键安装主键删除数据
             if (paramModel.pkValue != null && !paramModel.pkValue.isEmpty()) {
                 //获取主键
-                //String tablePrimary = FindTablePrimaryKey(tableIterator); //SearchTablePrimaryKey(paramModel.db_tableName, paramModel.rsid);
                 singlePrimary = pTableInfo.getPrimariyColumn();
                 if (singlePrimary == null) {
                     throw new Exception(String.format("error: primaryKey: %s not find. tableName:%s, rsid:%s", singlePrimary.name, paramModel.db_tableName, paramModel.rsid));
@@ -549,22 +519,24 @@ public class DBHelper {
      * @throws java.lang.Exception
      */
     public static String SqlSelectFactory(ReviveRSParamModel paramModel) throws Exception {
-        Set tableIterator = null;
+        // Set tableIterator = null;
         Set<String> columnsName = null;
-        Iterator tableDetailIterator = null;
-        String tempSql = null, linkTerm = null, tablePrimary = null;
-        DataBaseTypeEnum colunmType = null;
+        String tempSql = null, linkTerm = null;
         StringBuilder sqlsb = null;
+
+        TableInfoModel pTableInfo = null;
+        TableDetailModel singlePrimary = null;
         try {
+            pTableInfo = FindTableInformation(paramModel.db_tableName, paramModel.rsid);
+            if (pTableInfo == null) {
+                throw new Exception(String.format("could not find table's %s information.rsid's %s", paramModel.db_tableName, paramModel.rsid));
+            }
             sqlsb = new StringBuilder();
             sqlsb.append("SELECT ");
-            tableIterator = FindTableDetail(paramModel.db_tableName, paramModel.rsid);
-
             if (paramModel.db_columns != null && !paramModel.db_columns.isEmpty()) {
                 columnsName = paramModel.db_columns;
             } else {
-                tableDetailIterator = tableIterator.iterator();
-                columnsName = getColumnsName(tableDetailIterator);
+                columnsName = pTableInfo.getColumnsName();
             }
             for (String nextColumnName : columnsName) {
                 if (isExistMember(paramModel.db_RULcolumns, nextColumnName)) {
@@ -580,6 +552,7 @@ public class DBHelper {
                 }
                 sqlsb.append(" ,");
             }
+            columnsName.clear();
             columnsName = null;
             tempSql = sqlsb.substring(0, sqlsb.length() - 1);
             sqlsb.delete(0, sqlsb.length());
@@ -595,20 +568,20 @@ public class DBHelper {
                 sqlsb.append(linkTerm);
                 linkTerm = " AND ";
                 //获取主键
-                tablePrimary = FindTablePrimaryKey(tableIterator); //SearchTablePrimaryKey(paramModel.db_tableName, paramModel.rsid);
-                if (tablePrimary == null || tablePrimary.equals("")) {
-                    //return "primaryKey not find";
-                    throw new Exception("error: primaryKey not find." + tablePrimary);
+                singlePrimary = pTableInfo.getPrimariyColumn();
+                if (singlePrimary == null) {
+                    throw new Exception(String.format("error: primaryKey: %s not find. tableName:%s, rsid:%s", singlePrimary.name, paramModel.db_tableName, paramModel.rsid));
                 }
-                sqlsb.append(tablePrimary).append("=");
-                colunmType = GetColumnType(tableIterator, tablePrimary);
-                if (colunmType == DataBaseTypeEnum.number || colunmType == DataBaseTypeEnum.decimal) {
+
+                sqlsb.append(singlePrimary.name).append("=");
+                //colunmType = GetColumnType(tableIterator, tablePrimary);
+                if (singlePrimary.dataType == DataBaseTypeEnum.number || singlePrimary.dataType == DataBaseTypeEnum.decimal) {
                     sqlsb.append(" ").append(paramModel.pkValue).append(" ");
-                } else if (colunmType == DataBaseTypeEnum.charset || colunmType == DataBaseTypeEnum.date || colunmType == DataBaseTypeEnum.time || colunmType == DataBaseTypeEnum.datetime) {
+                } else if (singlePrimary.dataType == DataBaseTypeEnum.charset || singlePrimary.dataType == DataBaseTypeEnum.date || singlePrimary.dataType == DataBaseTypeEnum.time || singlePrimary.dataType == DataBaseTypeEnum.datetime) {
                     sqlsb.append("'").append(paramModel.pkValue).append("' ");
                 } else {
                     //sqlsb.append("columnTypeUnknown");
-                    throw new Exception("error: columnTypeUnknown ." + tablePrimary);
+                    throw new Exception(String.format("error: primaryKey:%s unknow type. tableName:%s, rsid:%s", singlePrimary.name, paramModel.db_tableName, paramModel.rsid));
                 }
                 RSLogger.LogInfo(sqlsb.toString());
                 return sqlsb.toString();
@@ -627,36 +600,38 @@ public class DBHelper {
         } catch (Exception e) {
             throw new Exception("SqlSelectFactory error:" + e.getLocalizedMessage());
         } finally {
-            UtileSmart.FreeObjects(tableIterator, columnsName, tableDetailIterator, tableDetailIterator, tempSql, linkTerm, tablePrimary, colunmType, sqlsb);
+            UtileSmart.FreeObjects(tempSql, linkTerm, sqlsb, pTableInfo, singlePrimary);
         }
 
     }
 
     public static String SqlSelectPageFactory(ReviveRSParamModel paramModel) throws Exception {
-        Set tableIterator = null;
-        String identityKeyName = null, linkTerm = null, tablePrimary = null;
+        String linkTerm = null, tablePrimary = null;
         StringBuffer sqlsb = null;
         Set<String> columnsName = null;
-        Iterator tableDetailIterator = null;
-        DataBaseTypeEnum colunmType = null;
         //tempTableName 在使用连接池是发现 #temp会出现重复
         String tempTableName = null;
+
+        TableInfoModel pTableInfo = null;
+        TableDetailModel singlePrimary = null;
         try {
+            pTableInfo = FindTableInformation(paramModel.db_tableName, paramModel.rsid);
+            if (pTableInfo == null) {
+                throw new Exception(String.format("could not find table's %s information.rsid's %s", paramModel.db_tableName, paramModel.rsid));
+            }
+
             // temp TableName 生成： 表名秒时间随机数（99）
             tempTableName = String.format("#t_%s%s%s", paramModel.db_tableName, common.UtileSmart.getCurrentDateSecond(), UtileSmart.getRandomStrbySeed(99));
 
-            tableIterator = FindTableDetail(paramModel.db_tableName, paramModel.rsid);
-            identityKeyName = FindTableIdentityKey(tableIterator);
             sqlsb = new StringBuffer();
             sqlsb.append("SELECT ");
             if (paramModel.db_columns != null && !paramModel.db_columns.isEmpty()) {
                 columnsName = paramModel.db_columns;
             } else {
-                tableDetailIterator = tableIterator.iterator();
-                columnsName = getColumnsName(tableDetailIterator);
+                columnsName = pTableInfo.getColumnsName();
             }
             for (String nextColumnName : columnsName) {
-                if (identityKeyName != null && identityKeyName.equals(nextColumnName)) {
+                if (pTableInfo.identityKey != null && pTableInfo.identityKey.name.equals(nextColumnName)) {
                     //convert(varchar,id) id
                     sqlsb.append(" convert (varchar,");
                     sqlsb.append(nextColumnName);
@@ -689,21 +664,18 @@ public class DBHelper {
                 sqlsb.append(linkTerm);
                 linkTerm = " AND ";
                 //获取主键
-                tablePrimary = FindTablePrimaryKey(tableIterator); //SearchTablePrimaryKey(paramModel.db_tableName, paramModel.rsid);
-                if (tablePrimary == null || tablePrimary.equals("")) {
-                    //return "primaryKey not find";
-                    throw new Exception("error: primaryKey not find." + tablePrimary);
+                singlePrimary = pTableInfo.getPrimariyColumn();
+                if (singlePrimary == null) {
+                    throw new Exception(String.format("error: primaryKey: %s not find. tableName:%s, rsid:%s", singlePrimary.name, paramModel.db_tableName, paramModel.rsid));
                 }
                 sqlsb.append(tablePrimary).append("=");
-                colunmType = GetColumnType(tableIterator, tablePrimary);
-                if (colunmType == DataBaseTypeEnum.number || colunmType == DataBaseTypeEnum.decimal) {
+                if (singlePrimary.dataType == DataBaseTypeEnum.number || singlePrimary.dataType == DataBaseTypeEnum.decimal) {
                     sqlsb.append(" ").append(paramModel.pkValue).append(" ");
-                } else if (colunmType == DataBaseTypeEnum.charset || colunmType == DataBaseTypeEnum.date || colunmType == DataBaseTypeEnum.time || colunmType == DataBaseTypeEnum.datetime) {
+                } else if (singlePrimary.dataType == DataBaseTypeEnum.charset || singlePrimary.dataType == DataBaseTypeEnum.date || singlePrimary.dataType == DataBaseTypeEnum.time || singlePrimary.dataType == DataBaseTypeEnum.datetime) {
                     sqlsb.append("'").append(paramModel.pkValue).append("' ");
                 } else {
-                    throw new Exception("error: columnTypeUnknown  key." + tablePrimary);
+                    throw new Exception(String.format("error: primaryKey:%s unknow type. tableName:%s, rsid:%s", singlePrimary.name, paramModel.db_tableName, paramModel.rsid));
                 }
-                RSLogger.LogInfo(sqlsb.toString());
                 return sqlsb.toString();
             }
 
@@ -732,7 +704,7 @@ public class DBHelper {
         } catch (Exception e) {
             throw new Exception("SqlSelectPageFactory error:" + e.getLocalizedMessage());
         } finally {
-            UtileSmart.FreeObjects(tableIterator, identityKeyName, linkTerm, tablePrimary, sqlsb, columnsName, tableDetailIterator, colunmType, tempTableName);
+            UtileSmart.FreeObjects(linkTerm, tablePrimary, sqlsb, columnsName, tempTableName, pTableInfo, singlePrimary);
         }
 
     }
@@ -1324,23 +1296,7 @@ public class DBHelper {
         return true;
     }
 
-    /**
-     * 在本地数据库信息中读取 表信息，
-     *
-     * @param tableName
-     * @param RSID
-     * @return
-     * @throws Exception
-     */
-    private static Set<TableDetailModel> FindTableDetail(String tableName, String RSID) throws Exception {
-        DBDetailModel dbDetailModel = GetRSIDModel(RSID);
-        for (TableInfoModel tableInfo : dbDetailModel.dbTableInfos) {
-            if (tableInfo.tbName.equals(tableName)) {
-                return tableInfo.tableDetails;
-            }
-        }
-        return null;
-    }
+ 
 
     /**
      * 在本地数据库信息中读取 表信息，
@@ -1360,53 +1316,6 @@ public class DBHelper {
         return null;
     }
 
-    /**
-     * 在本地数据库信息中读取 表主键
-     *
-     * @param tableName
-     * @param RSID
-     * @return
-     * @throws Exception
-     */
-    private static String FindTablePrimaryKey(String tableName, String RSID) throws Exception {
-        Set<TableDetailModel> tableModels = FindTableDetail(tableName, RSID);
-        if (tableModels == null) {
-            return null;
-        }
-        return FindTablePrimaryKey(tableModels);
-    }
-
-    /**
-     * 在本地数据库信息中读取 表主键
-     *
-     * @param tableModel
-     * @return
-     * @throws Exception
-     */
-    private static String FindTablePrimaryKey(Set<TableDetailModel> tableModel) throws Exception {
-        for (TableDetailModel tempTableModel : tableModel) {
-            if (tempTableModel.isPrimaryKey == true) {
-                return tempTableModel.name;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * 在本地数据库信息中读取 表主键
-     *
-     * @param tableModel
-     * @return
-     * @throws Exception
-     */
-    private static String FindTablePrimaryKeys(Set<TableDetailModel> tableModel) throws Exception {
-        for (TableDetailModel tempTableModel : tableModel) {
-            if (tempTableModel.isPrimaryKey == true) {
-                return tempTableModel.name;
-            }
-        }
-        return null;
-    }
     /*
      查询表主键sql语句
      */
