@@ -7,14 +7,16 @@ package common.model;
 
 import java.util.HashSet;
 import java.util.Set;
+import javax.websocket.Session;
 
 /**
  *
  * @author Administrator
  */
-public class MsgClientPush {
+public class MsgClientPushParam {
     public Set<String> pushIds = new HashSet<>();
     public String rsid;
     public String userName;
     public String userPwd;
+    public Session sessionClient;
 }

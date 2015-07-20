@@ -5,12 +5,12 @@
  */
 package webSocket;
 
-import common.model.MsgClientPush;
+import common.model.MsgClientPushParam;
 
 /**
  *
  * @author Administrator
  */
 public interface IAnalyzeMessage {
-    public MsgClientPush transferMsg(String param);  
+    public MsgClientPushParam transferMsg(String param);  
 }

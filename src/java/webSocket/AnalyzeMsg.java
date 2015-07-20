@@ -6,7 +6,7 @@
 package webSocket;
 
 import common.UtileSmart;
-import common.model.MsgClientPush;
+import common.model.MsgClientPushParam;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
@@ -17,8 +17,8 @@ import net.sf.json.JSONObject;
 public class AnalyzeMsg implements IAnalyzeMessage {
 
     @Override
-    public MsgClientPush transferMsg(String param) {
-        MsgClientPush msgclientPush = null;
+    public MsgClientPushParam transferMsg(String param) {
+        MsgClientPushParam msgclientPush = null;
         JSONObject jsonObj = null,jsonBody=null;
         JSONArray jsonArrayPushIds=null;
         try {
@@ -26,7 +26,7 @@ public class AnalyzeMsg implements IAnalyzeMessage {
             // {"head": { "RSID":"AustraliaBank" },"body": {  "pushId":["DebitCardNum1"] }  }
             //{"head": { "RSID":"AustraliaBank" },"body": { "rs_Name":"demo","rs_Pwd":"demo", "pushId":["DebitCardNum1","DebitCardNum2"] }  }
             jsonObj = JSONObject.fromObject(param);
-            msgclientPush = new MsgClientPush();
+            msgclientPush = new MsgClientPushParam();
             msgclientPush.rsid = jsonObj.getJSONObject("head").getString("RSID");
             jsonBody = jsonObj.getJSONObject("body");
             msgclientPush.userName = common.UtileSmart.GetJsonString(jsonBody, "rs_Name");

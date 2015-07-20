@@ -45,6 +45,65 @@ public class ReviveRSParamModel {
 
     public Map<String, String> db_valueFilter;//修改，安装列值来修改数据，删除，安装列值来删除数据
 
+    public String getInformation() {
+        StringBuffer sb = new StringBuffer();
+
+        sb.append(String.format("ReviveRSParamModel:  db_tableName :'%s'", db_tableName)).append("\t");
+        sb.append(String.format("token :'%s'",token)).append("\t");
+        sb.append(String.format("rsid :'%s'", rsid)).append("\t");
+        sb.append(String.format("sql :'%s'", sql)).append("\t");
+        sb.append(String.format("db_orderBy:'%s'",db_orderBy)).append("\t");
+        sb.append(String.format("pkValue :'%s'", pkValue)).append("\t");
+        
+        if (pkValues != null) {
+            sb.append(String.format("pkValues size:'%d'", pkValues.size()));
+            for (String keySet : pkValues.keySet()) {
+                sb.append(String.format("pkValues key:'%s',value:'%s'", keySet, pkValues.get(keySet)));
+            }
+            sb.append("\t");
+        } else {
+            sb.append("pkValues is null \t");
+        }
+        if (db_columns != null) {
+            sb.append(String.format("db_columns size :'%s'", db_columns.size()));
+            for (String db_column : db_columns) {
+                sb.append(String.format("%s", db_column));
+            }
+            sb.append("\t");
+        } else {
+            sb.append("db_columns is null \t");
+        }
+
+        if (db_valueColumns != null) {
+            sb.append(String.format("db_valueColumns size :'%d'", db_valueColumns.size()));
+            for (String keySet : db_valueColumns.keySet()) {
+                sb.append(String.format("db_valueColumns key:'%s',value:'%s'", keySet, db_valueColumns.get(keySet)));
+            }
+            sb.append("\t");
+        } else {
+            sb.append("db_valueColumns is null \t");
+        }
+        if (db_valueFilter != null) {
+            sb.append(String.format("db_valueFilter size :'%d'", db_valueFilter.size()));
+            for (String keySet : db_valueFilter.keySet()) {
+                sb.append(String.format("db_valueFilter key:'%s',value:'%s'", keySet, db_valueFilter.get(keySet)));
+            }
+            sb.append("\t");
+        } else {
+            sb.append("db_valueFilter is null \t");
+        }
+
+        if (db_RULcolumns != null) {
+            sb.append(String.format("db_RULcolumns size :'%s'", db_RULcolumns.size()));
+            sb.append("\t");
+        } else {
+            sb.append("db_RULcolumns is null \t");
+        }
+        sb.append(String.format("handle :'%s'", handle));
+        sb.append("\t");
+        return sb.toString();
+    }
+
     public void destroySelf() {
         this.db_RULcolumns = null;
         this.db_columns = null;

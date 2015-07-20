@@ -6,9 +6,10 @@
 package webSocket;
 
 import common.FormationResult;
+import common.RSThreadPool;
 import common.VerificationSign;
 import common.model.ExecuteResultParam;
-import common.model.MsgClientPush;
+import common.model.MsgClientPushParam;
 import common.model.MsgFilterModel;
 import common.model.ResponseResultCode;
 import common.model.SystemSetModel;
@@ -67,9 +68,9 @@ public class AssignTrial {
 
     @OnMessage
     public void onMessage(Session session, String msgParam) {
-        common.RSLogger.LogInfo(String.format("onMessage： receive the message form %s :%s", session.getId(),msgParam));
+        common.RSLogger.LogInfo(String.format("onMessage： receive the message form %s :%s", session.getId(), msgParam));
         try {
-            MsgClientPush msgClient = analyzeMsg.transferMsg(msgParam);
+            MsgClientPushParam msgClient = analyzeMsg.transferMsg(msgParam);
             FormationResult formationResult = new FormationResult();
             if (msgClient == null) {
                 WebSocketHelper.sendTextToClient(session, formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("解析参数失败", msgParam)));
@@ -92,8 +93,11 @@ public class AssignTrial {
                     }
                 }
             }
-            //发送注册成功消息
+            //register success, send pushid to client.
+            //just send success to client.
             WebSocketHelper.sendTextToClient(session, formationResult.formationResult(ResponseResultCode.Success, new ExecuteResultParam()));
+            //search data from db and send to client.
+            RSThreadPool.ThreadPoolExecute(new ManualPushMsg(msgClient));
         } catch (Exception e) {
             common.RSLogger.ErrorLogInfo("webSocket onMessage error." + e.getLocalizedMessage(), e);
             System.out.printf(e.getLocalizedMessage());

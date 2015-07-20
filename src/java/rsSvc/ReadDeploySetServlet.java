@@ -6,8 +6,8 @@
 package rsSvc;
 
 import common.DeployInfo;
+import common.RSThreadPool;
 import java.io.IOException;
-import java.io.PrintWriter;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -27,6 +27,12 @@ public class ReadDeploySetServlet extends HttpServlet {
         } catch (Exception e) {
             common.RSLogger.SetUpLogInfo(String.format("start service error step readSetUp ,%s", e.getLocalizedMessage()));
             common.RSLogger.ErrorLogInfo(String.format("start service error step readSetUp ,%s", e.getLocalizedMessage()), e);
+        }
+        try {
+            RSThreadPool.initialTheadPool();
+        } catch (Exception e) {
+            common.RSLogger.SetUpLogInfo(String.format("start service error step initialCachedTheadPool ,%s", e.getLocalizedMessage()));
+            common.RSLogger.ErrorLogInfo(String.format("start service error step initialCachedTheadPool ,%s", e.getLocalizedMessage()), e);
         }
         try {
             common.RSLogger.Initial();
