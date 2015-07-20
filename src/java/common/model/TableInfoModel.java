@@ -48,13 +48,14 @@ public class TableInfoModel {
         }
         return null;
     }
-    
+
     /**
-     * get all column name 
+     * get all column name
+     *
      * @return Set<String>
      */
-    public Set<String> getColumnsName(){
-        if (tableDetails==null) {
+    public Set<String> getColumnsName() {
+        if (tableDetails == null) {
             return null;
         }
         Set<String> columns = new HashSet<>();
@@ -65,11 +66,11 @@ public class TableInfoModel {
     }
 
     /**
-     * if single primary column return primary column detail 
-     * else not single column throw exception
+     * if single primary column return primary column detail else not single
+     * column throw exception
      *
      * @return primary column detail
-     * @throws java.lang.Exception ,not single column 
+     * @throws java.lang.Exception ,not single column
      */
     public TableDetailModel getPrimariyColumn() throws Exception {
         if (tbPrimaryKeys == null) {
@@ -79,7 +80,24 @@ public class TableInfoModel {
             throw new Exception(String.format("table:%s,not single primary key.", tbName));
         }
         for (TableDetailModel tbPrimaryKey : tbPrimaryKeys) {
-            if (tbPrimaryKey.isPrimaryKey) {
+            return tbPrimaryKey;
+        }
+        return null;
+    }
+
+    
+    /**
+     * get primary column by column name.
+     * @param columnName
+     * @return 
+     * @throws Exception 
+     */
+    public TableDetailModel getPrimariyColumnByName(String columnName) throws Exception {
+        if (tbPrimaryKeys == null || tbPrimaryKeys.isEmpty()) {
+            return null;
+        }
+        for (TableDetailModel tbPrimaryKey : tbPrimaryKeys) {
+            if (tbPrimaryKey.name.equals(columnName)) {
                 return tbPrimaryKey;
             }
         }

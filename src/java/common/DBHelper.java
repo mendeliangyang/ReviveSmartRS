@@ -188,7 +188,6 @@ public class DBHelper {
     }
 
     private static Set<TableDetailModel> SearchTableDetail(String tableName, String RSID) throws Exception {
-
 //        StringBuffer sqlsb = new StringBuffer("SELECT sc.name,sc.type,sc.status,sc.usertype FROM syscolumns sc INNER JOIN sysobjects so ON sc.id = so.id WHERE so.name = '");
         StringBuffer sqlsb = new StringBuffer("select  o.name as tbName , c.name,c.type, c.status,c.usertype  ,t.name as dataTypeName from sysobjects o inner join syscolumns c on c.id = o.id inner join systypes t on t.usertype = c.usertype where o.type = 'U' and o.name ='");
         sqlsb.append(tableName);
@@ -216,44 +215,6 @@ public class DBHelper {
             DBHelper.CloseConnection(result, stmt, conn);
         }
         return tableDetail;
-    }
-
-    private static String SearchTablePrimaryKey(String tableName, String RSID) throws Exception {
-//        String sqlStr = "select 'tableName' = object_name(sc.id),\n"
-//                + "'columnName' = index_col(object_name(sc.id),sc.indid,1),\n"
-//                + "'indexDescription' = convert(varchar(210), case when (sc.status & 16)<>0 then 'clustered' else 'nonclustered' end\n"
-//                + "+ case when (sc.status & 1)<>0 then ', '+'ignore duplicate keys' else '' end\n"
-//                + "+ case when (sc.status & 2)<>0 then ', '+'unique' else '' end\n"
-//                + "+ case when (sc.status & 4)<>0 then ', '+'ignore duplicate rows' else '' end\n"
-//                + "+ case when (sc.status & 64)<>0 then ', '+'statistics' else case when (status & 32)<>0 then ', '+'hypothetical' else '' end end\n"
-//                + "+ case when (sc.status & 2048)<>0 then ', '+'primary key' else '' end\n"
-//                + "+ case when (sc.status & 4096)<>0 then ', '+'unique key' else '' end\n"
-//                + "+ case when (sc.status & 8388608)<>0 then ', '+'auto create' else '' end\n"
-//                + "+ case when (sc.status & 16777216)<>0 then ', '+'stats no recompute' else '' end),\n"
-//                + "'indexName' = name\n"
-//                + "from sysindexes sc where  (sc.status & 64) = 0 \n"
-//                + "order by sc.id";
-
-        Connection conn = null;
-        Statement stmt = null;
-        ResultSet result = null;
-        try {
-            conn = DBHelper.ConnectSybase(RSID);
-            stmt = conn.createStatement();
-            result = stmt.executeQuery(SearchTablePrimaryKeyStrByUserTable);
-            while (result.next()) {
-                if (tableName.equals(result.getString("tableName")) && result.getString("indexDescription").indexOf("primary key") > 0) {
-                    return result.getString("columnName");
-                }
-            }
-        } catch (SQLException e) {
-            // e.printStackTrace();
-            RSLogger.ErrorLogInfo("get table primary key error:" + e.getMessage());
-        } finally {
-            DBHelper.CloseConnection(result, stmt, conn);
-        }
-        return null;
-
     }
 
     /**
@@ -402,8 +363,28 @@ public class DBHelper {
                 } else {
                     throw new Exception(String.format("error: primaryKey:%s unknow type. tableName:%s, rsid:%s", singlePrimary.name, paramModel.db_tableName, paramModel.rsid));
                 }
-                RSLogger.LogInfo(sqlsb.toString());
                 return sqlsb.toString();
+            } else if (paramModel.pkValues != null && !paramModel.pkValues.isEmpty()) {
+                if (pTableInfo.tbPrimaryKeys == null || pTableInfo.tbPrimaryKeys.isEmpty()) {
+                    throw new Exception(String.format("error: primaryKey: %s not find. tableName:%s, rsid:%s", singlePrimary.name, paramModel.db_tableName, paramModel.rsid));
+                }
+                Set<String> pkValueKeys = paramModel.pkValues.keySet();
+                for (String pkValueKey : pkValueKeys) {
+                    singlePrimary = pTableInfo.getPrimariyColumnByName(pkValueKey);
+                    if (singlePrimary == null) {
+                        throw new Exception(String.format("error: primaryKey: %s not find. tableName:%s, rsid:%s", singlePrimary.name, paramModel.db_tableName, paramModel.rsid));
+                    }
+                    sqlsb.append(singlePrimary.name).append("=");
+                    if (singlePrimary.dataType == DataBaseTypeEnum.number || singlePrimary.dataType == DataBaseTypeEnum.decimal) {
+                        sqlsb.append(" ").append(paramModel.pkValues.get(pkValueKey)).append(" ");
+                    } else if (singlePrimary.dataType == DataBaseTypeEnum.charset || singlePrimary.dataType == DataBaseTypeEnum.date || singlePrimary.dataType == DataBaseTypeEnum.time || singlePrimary.dataType == DataBaseTypeEnum.datetime) {
+                        sqlsb.append("'").append(paramModel.pkValues.get(pkValueKey)).append("' ");
+                    } else {
+                        throw new Exception(String.format("error: primaryKey:%s unknow type. tableName:%s, rsid:%s", singlePrimary.name, paramModel.db_tableName, paramModel.rsid));
+                    }
+                    sqlsb.append(" and ");
+                }
+                return sqlsb.substring(0, sqlsb.lastIndexOf("and"));
             } else {
                 //param不包含主键，按照传入条件进行删除
                 Iterator noteIterator = paramModel.db_valueFilter.keySet().iterator();//jsonNote.keys();
@@ -423,7 +404,6 @@ public class DBHelper {
                     }
                     sqlsb.append(" and");
                 }
-                RSLogger.LogInfo(sqlsb.toString());
                 return sqlsb.substring(0, sqlsb.lastIndexOf("and"));
             }
         } catch (Exception e) {
@@ -475,8 +455,28 @@ public class DBHelper {
                 } else {
                     throw new Exception(String.format("error: primaryKey:%s unknow type. tableName:%s, rsid:%s", singlePrimary.name, paramModel.db_tableName, paramModel.rsid));
                 }
-                RSLogger.LogInfo(sqlSb.toString());
                 return sqlSb.toString();
+            } else if (paramModel.pkValues != null && !paramModel.pkValues.isEmpty()) {
+                if (pTableInfo.tbPrimaryKeys == null || pTableInfo.tbPrimaryKeys.isEmpty()) {
+                    throw new Exception(String.format("error: primaryKey: %s not find. tableName:%s, rsid:%s", singlePrimary.name, paramModel.db_tableName, paramModel.rsid));
+                }
+                Set<String> pkValueKeys = paramModel.pkValues.keySet();
+                for (String pkValueKey : pkValueKeys) {
+                    singlePrimary = pTableInfo.getPrimariyColumnByName(pkValueKey);
+                    if (singlePrimary == null) {
+                        throw new Exception(String.format("error: primaryKey: %s not find. tableName:%s, rsid:%s", singlePrimary.name, paramModel.db_tableName, paramModel.rsid));
+                    }
+                    sqlSb.append(singlePrimary.name).append("=");
+                    if (singlePrimary.dataType == DataBaseTypeEnum.number || singlePrimary.dataType == DataBaseTypeEnum.decimal) {
+                        sqlSb.append(" ").append(paramModel.pkValues.get(pkValueKey)).append(" ");
+                    } else if (singlePrimary.dataType == DataBaseTypeEnum.charset || singlePrimary.dataType == DataBaseTypeEnum.date || singlePrimary.dataType == DataBaseTypeEnum.time || singlePrimary.dataType == DataBaseTypeEnum.datetime) {
+                        sqlSb.append("'").append(paramModel.pkValues.get(pkValueKey)).append("' ");
+                    } else {
+                        throw new Exception(String.format("error: primaryKey:%s unknow type. tableName:%s, rsid:%s", singlePrimary.name, paramModel.db_tableName, paramModel.rsid));
+                    }
+                    sqlSb.append(" and ");
+                }
+                return sqlSb.substring(0, sqlSb.lastIndexOf("and"));
             } else {
                 //param不包含主键，按照传入条件进行删除
                 Iterator keys = paramModel.db_valueFilter.keySet().iterator(); //jsonNote.keys();
@@ -496,7 +496,6 @@ public class DBHelper {
                     }
                     sqlSb.append(" and");
                 }
-                RSLogger.LogInfo(sqlSb.toString());
                 return sqlSb.substring(0, sqlSb.lastIndexOf("and"));
             }
         } catch (Exception e) {
@@ -583,8 +582,30 @@ public class DBHelper {
                     //sqlsb.append("columnTypeUnknown");
                     throw new Exception(String.format("error: primaryKey:%s unknow type. tableName:%s, rsid:%s", singlePrimary.name, paramModel.db_tableName, paramModel.rsid));
                 }
-                RSLogger.LogInfo(sqlsb.toString());
                 return sqlsb.toString();
+            } else if (paramModel.pkValues != null && !paramModel.pkValues.isEmpty()) {
+                if (pTableInfo.tbPrimaryKeys == null || pTableInfo.tbPrimaryKeys.isEmpty()) {
+                    throw new Exception(String.format("error: primaryKey: %s not find. tableName:%s, rsid:%s", singlePrimary.name, paramModel.db_tableName, paramModel.rsid));
+                }
+                sqlsb.append(linkTerm);
+                linkTerm = " AND ";
+                Set<String> pkValueKeys = paramModel.pkValues.keySet();
+                for (String pkValueKey : pkValueKeys) {
+                    singlePrimary = pTableInfo.getPrimariyColumnByName(pkValueKey);
+                    if (singlePrimary == null) {
+                        throw new Exception(String.format("error: primaryKey: %s not find. tableName:%s, rsid:%s", singlePrimary.name, paramModel.db_tableName, paramModel.rsid));
+                    }
+                    sqlsb.append(singlePrimary.name).append("=");
+                    if (singlePrimary.dataType == DataBaseTypeEnum.number || singlePrimary.dataType == DataBaseTypeEnum.decimal) {
+                        sqlsb.append(" ").append(paramModel.pkValues.get(pkValueKey)).append(" ");
+                    } else if (singlePrimary.dataType == DataBaseTypeEnum.charset || singlePrimary.dataType == DataBaseTypeEnum.date || singlePrimary.dataType == DataBaseTypeEnum.time || singlePrimary.dataType == DataBaseTypeEnum.datetime) {
+                        sqlsb.append("'").append(paramModel.pkValues.get(pkValueKey)).append("' ");
+                    } else {
+                        throw new Exception(String.format("error: primaryKey:%s unknow type. tableName:%s, rsid:%s", singlePrimary.name, paramModel.db_tableName, paramModel.rsid));
+                    }
+                    sqlsb.append(" and ");
+                }
+                return sqlsb.substring(0, sqlsb.lastIndexOf("and"));
             }
 
             if (paramModel.sql != null && !paramModel.sql.isEmpty()) {
@@ -594,8 +615,6 @@ public class DBHelper {
                 sqlsb.append(" order by ");
                 sqlsb.append(paramModel.db_orderBy);
             }
-
-            RSLogger.LogInfo("sql: " + sqlsb.toString());
             return sqlsb.toString();
         } catch (Exception e) {
             throw new Exception("SqlSelectFactory error:" + e.getLocalizedMessage());
@@ -654,30 +673,8 @@ public class DBHelper {
 
             //sqlsb.append(" sybid=identity(12) into #temp FROM ");
             sqlsb.append(" sybid=identity(12) into ").append(tempTableName).append(" FROM ");
-
             sqlsb.append(paramModel.db_tableName);
-
             linkTerm = " WHERE ";
-
-            if (paramModel.pkValue != null && !paramModel.pkValue.isEmpty()) {
-
-                sqlsb.append(linkTerm);
-                linkTerm = " AND ";
-                //获取主键
-                singlePrimary = pTableInfo.getPrimariyColumn();
-                if (singlePrimary == null) {
-                    throw new Exception(String.format("error: primaryKey: %s not find. tableName:%s, rsid:%s", singlePrimary.name, paramModel.db_tableName, paramModel.rsid));
-                }
-                sqlsb.append(tablePrimary).append("=");
-                if (singlePrimary.dataType == DataBaseTypeEnum.number || singlePrimary.dataType == DataBaseTypeEnum.decimal) {
-                    sqlsb.append(" ").append(paramModel.pkValue).append(" ");
-                } else if (singlePrimary.dataType == DataBaseTypeEnum.charset || singlePrimary.dataType == DataBaseTypeEnum.date || singlePrimary.dataType == DataBaseTypeEnum.time || singlePrimary.dataType == DataBaseTypeEnum.datetime) {
-                    sqlsb.append("'").append(paramModel.pkValue).append("' ");
-                } else {
-                    throw new Exception(String.format("error: primaryKey:%s unknow type. tableName:%s, rsid:%s", singlePrimary.name, paramModel.db_tableName, paramModel.rsid));
-                }
-                return sqlsb.toString();
-            }
 
             if (paramModel.sql != null && !paramModel.sql.isEmpty()) {
                 sqlsb.append(linkTerm).append(paramModel.sql);
@@ -699,7 +696,6 @@ public class DBHelper {
             sqlsb.append(pageOffset);
             sqlsb.append(" and sybid <= ");
             sqlsb.append(topNum);
-            RSLogger.LogInfo("sql: " + sqlsb.toString());
             return sqlsb.toString();
         } catch (Exception e) {
             throw new Exception("SqlSelectPageFactory error:" + e.getLocalizedMessage());
@@ -1173,7 +1169,6 @@ public class DBHelper {
         Statement stmt = null;
         ResultSet result = null;
         Set<TableInfoModel> tableInfos = new HashSet<>();
-        StringBuffer sbTempTablePrimaryKey = new StringBuffer();
         //获取数据库连接
         try {
             String sqlForTableName = "select ob.* from sysobjects ob where ob.type='U' ";
@@ -1218,39 +1213,34 @@ public class DBHelper {
             }
             result1.close();
             String tempPrimaryName = null;
-            ResultSet result2 = stmt.executeQuery(SearchTablePrimaryKeyStrByUserTable);
+            ResultSet result2 = stmt.executeQuery(SearchTabelPrimaryKeyStrByUTable);
 //            while (result.next()) {
 //                if (tableName.equals(result.getString("tableName")) && result.getString("indexDescription").indexOf("primary key") > 0) {
 //                    return result.getString("columnName");
 //                }
 //            }
-            for (TableInfoModel tableInfo : tableInfos) {
-                sbTempTablePrimaryKey.delete(0, sbTempTablePrimaryKey.length());
-                while (result2.next()) {
-                    sbTempTablePrimaryKey.append(String.format("tableName is %s , rsid is %s，current tableName:%s,indexDescription:%s", tableInfo.tbName, rsid, result2.getString("tableName"), result2.getString("indexDescription")));
-                    if (tableInfo.tbName.equals(result2.getString("tableName")) && result2.getString("indexDescription").indexOf("primary key") > 0) {
-                        tempPrimaryName = result2.getString("columnName");
-                        break;
+            while (result2.next()) {
+                for (TableInfoModel tableInfo : tableInfos) {
+                    if (tableInfo.tbName.equals(result2.getString("tabname"))) {
+                        tempPrimaryName = result2.getString("columnname");
+                        for (TableDetailModel tableDetail : tableInfo.tableDetails) {
+                            if (tableDetail.name.equals(tempPrimaryName)) {
+                                tableDetail.isPrimaryKey = true;
+                                tableInfo.tbPrimaryKeys.add(tableDetail);
+                                break;
+                            }
+                        }
                     }
                 }
-                if (tempPrimaryName == null || tempPrimaryName.isEmpty()) {
-                    common.RSLogger.SetUpLogInfo(sbTempTablePrimaryKey.toString());
-                    common.RSLogger.SetUpLogInfo(String.format("loadDBInformation error tableName is %s , rsid is %s", tableInfo.tbName, rsid));
-                    throw new Exception(String.format("loadDBInformation error tableName is %s , rsid is %s", tableInfo.tbName, rsid));
-                    //continue;
-                }
-                for (TableDetailModel tableDetail : tableInfo.tableDetails) {
-                    if (tableDetail.name.equals(tempPrimaryName)) {
-                        tableDetail.isPrimaryKey = true;
-                        //tableInfo.tbPrimaryKey = tableDetail;
-                        tableInfo.tbPrimaryKeys.add(tableDetail);
-                        break;
-                    }
-                }
+//                if (tempPrimaryName == null || tempPrimaryName.isEmpty()) {
+//                    //log no primary table .
+//                    common.RSLogger.SetUpLogInfo(String.format("special loadDBInformation  tableName is %s , rsid is %s  no primary.", tableInfo.tbName, rsid));
+//                    //throw new Exception(String.format("loadDBInformation error tableName is %s , rsid is %s", tableInfo.tbName, rsid));
+//                    //continue;
+//                }
+
             }
 
-            sbTempTablePrimaryKey.delete(0, sbTempTablePrimaryKey.length());
-            sbTempTablePrimaryKey = null;
             result2.close();
             DBDetailModel dbDetailModel = new DBDetailModel();
             dbDetailModel.rsId = rsid;
@@ -1296,8 +1286,6 @@ public class DBHelper {
         return true;
     }
 
- 
-
     /**
      * 在本地数据库信息中读取 表信息，
      *
@@ -1333,6 +1321,7 @@ public class DBHelper {
             + "'indexName' = name\n"
             + "from sysindexes sc where  (sc.status & 64) = 0 \n"
             + "order by sc.id";
+
     private static final String SearchTablePrimaryKeyStrByUserTable = "select 'tableName' = object_name(sc.id),\n"
             + "'columnName' = index_col(object_name(sc.id),sc.indid,1),\n"
             + "'indexDescription' = convert(varchar(210), case when (sc.status & 16)<>0 then 'clustered' else 'nonclustered' end\n"
@@ -1347,6 +1336,24 @@ public class DBHelper {
             + "'indexName' = name\n"
             + "from sysindexes sc where  (sc.status & 64) = 0  and object_name(sc.id) in (select ob.name from sysobjects ob where ob.type='U' )\n"
             + "order by sc.id ";
+
+    /**
+     * 查询用户表，和主键列
+     */
+    private static final String SearchTabelPrimaryKeyStrByUTable = "select  tabname ,columnname from \n"
+            + "(  SELECT  object_name(id) tabname,  index_col( object_name(id) ,indid,1) columnname  FROM sysindexes  WHERE status & 2048=2048 \n"
+            + "    union \n"
+            + "    SELECT  object_name(id),  index_col( object_name(id) ,indid,2)  FROM sysindexes    WHERE status & 2048=2048 \n"
+            + "    union\n"
+            + "    SELECT  object_name(id),  index_col( object_name(id) ,indid,3)  FROM sysindexes  WHERE status & 2048=2048 \n"
+            + "    union \n"
+            + "    SELECT  object_name(id),    index_col( object_name(id) ,indid,4)  FROM sysindexes  WHERE status & 2048=2048 \n"
+            + "    union  \n"
+            + "    select  object_name(id),  index_col( object_name(id) ,indid,5)    FROM sysindexes  WHERE status & 2048=2048 \n"
+            + "    union \n"
+            + "    SELECT  object_name(id),  index_col( object_name(id) ,indid,6)  FROM sysindexes    WHERE status & 2048=2048 ) pk\n"
+            + "where  columnname is not null";
+
     /*
      查询表identity列sql语句
      */

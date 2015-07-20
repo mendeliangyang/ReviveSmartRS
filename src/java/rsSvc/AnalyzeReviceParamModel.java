@@ -13,6 +13,7 @@ import common.model.SignModel;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
@@ -21,13 +22,14 @@ import net.sf.json.JSONObject;
  * @author Administrator
  */
 public class AnalyzeReviceParamModel implements IAnalyzeReviceParamModel {
-
+    
     @Override
     public ReviveRSParamModel transferReviveRSParamModel(String param, OperateTypeEnum operateType) throws Exception {
         ReviveRSParamModel paramModel = null;
-        JSONObject jsonObj = null, jsonBody = null, jsonNote = null, jsonHead = null, jsonValues = null;
+        JSONObject jsonObj = null, jsonBody = null, jsonNote = null, jsonHead = null, jsonValues = null, jsonPkvalue = null;
         JSONArray url_columns = null, db_columns = null;
         String strTemp = null;
+        Object objPkvalue = null;
         try {
             jsonObj = JSONObject.fromObject(param);
             jsonHead = jsonObj.getJSONObject("head");
@@ -39,14 +41,27 @@ public class AnalyzeReviceParamModel implements IAnalyzeReviceParamModel {
                 paramModel.handle = UtileSmart.GetJsonString(jsonHead, "handle");
 // todo    public String fileColumn; //base64，或者上传文件指定保存文件的列名称
             }
-
             jsonBody = jsonObj.getJSONObject("body");
             jsonNote = jsonBody.getJSONObject("note");
             jsonValues = jsonBody.getJSONObject("values");
-
+            
             paramModel.db_tableName = UtileSmart.GetJsonString(jsonNote, DeployInfo.paramTableName, true);
-            paramModel.pkValue = UtileSmart.GetJsonString(jsonNote, "pkValue");
-
+            //get primary value.if string single clolumn ,if object multi column
+            if (jsonNote.containsKey("pkValue")) {
+                objPkvalue = jsonNote.get("pkValue");
+                if (objPkvalue instanceof String) {
+                    //String
+                    paramModel.pkValue = UtileSmart.GetJsonString(jsonNote, "pkValue");
+                } else if (objPkvalue instanceof JSONObject) {
+                    //jsonObject
+                    paramModel.pkValues = new HashMap<>();
+                    jsonPkvalue = (JSONObject) objPkvalue;
+                    Set pkValueKeys = jsonPkvalue.keySet();
+                    for (Object pkValueKey : pkValueKeys) {
+                        paramModel.pkValues.put(pkValueKey.toString(), jsonPkvalue.getString(pkValueKey.toString()));
+                    }
+                }
+            }
             // select
             if (OperateTypeEnum.select == operateType) {
                 paramModel.sql = UtileSmart.GetJsonString(jsonValues, "sql");
@@ -98,7 +113,7 @@ public class AnalyzeReviceParamModel implements IAnalyzeReviceParamModel {
             common.UtileSmart.FreeObjects(jsonObj, jsonBody, jsonNote, jsonHead, jsonValues, url_columns, db_columns, strTemp, operateType);
         }
     }
-
+    
     @Override
     public SignModel transferReviveRSSignModel(String param, OperateTypeEnum operateType) throws Exception {
         SignModel signModel = null;
@@ -133,10 +148,11 @@ public class AnalyzeReviceParamModel implements IAnalyzeReviceParamModel {
 
     /**
      * 验证json格式，和是否登录
+     *
      * @param param
      * @param isMustSign
      * @return
-     * @throws Exception 
+     * @throws Exception
      */
     public JSONObject verificationParam(String param, boolean isMustSign) throws Exception {
         //todo  后续可以直接检查是否登录
@@ -148,9 +164,9 @@ public class AnalyzeReviceParamModel implements IAnalyzeReviceParamModel {
             common.UtileSmart.FreeObjects(jsonObj, jsonBody, jsonNote, jsonHead, jsonValues);
         }
         if (isMustSign) {
-
+            
         }
         return jsonObj;
     }
-
+    
 }
