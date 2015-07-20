@@ -40,13 +40,14 @@ public class Decoy implements Runnable {
                         }
                         if (msgFilterModel.dbTable.equals(msg)) {
                             //启动新的线程处理该数据变动
-                            Thread reapDataThread = new Thread(new ReapData(msgFilterModel, sessions));
-                            reapDataThread.start();
+//                            Thread reapDataThread = new Thread(new ReapData(msgFilterModel, sessions));
+//                            reapDataThread.start();
+                            //use the thread pool take
+                            common.RSThreadPool.ThreadPoolExecute(new ReapData(msgFilterModel, sessions));
 
                         }
                     }
                 }
-
             } catch (Exception ex) {
                 common.RSLogger.ErrorLogInfo("Decoy error." + ex.getLocalizedMessage());
             }

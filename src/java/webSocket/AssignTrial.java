@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import javax.websocket.OnClose;
 import javax.websocket.OnError;
 import javax.websocket.OnMessage;
@@ -52,12 +53,19 @@ public class AssignTrial {
                 }
             }
             //启动线程
-            Thread decoyThread = new Thread(new Decoy(), "decoyThread");
-            decoyThread.start();
+//            Thread decoyThread = new Thread(new Decoy(), "decoyThread");
+//            decoyThread.start();
             //启动守护线程
-            Thread reapDataGuardThread = new Thread(new ReapDataGuard(decoyThread), "reapDataGuardThread");
-            reapDataGuardThread.start();
+//            Thread reapDataGuardThread = new Thread(new ReapDataGuard(decoyThread), "reapDataGuardThread");
+//            reapDataGuardThread.start();
+            //scheduledThreadPoolExecutor replace thread , guardThread
+            common.RSThreadPool.scheduledThreadPoolExecutor(new Decoy(), 1, 4000, 4000, TimeUnit.MILLISECONDS);
+            common.RSLogger.SetUpLogInfo("websocket service initial success.");
+
         } catch (Exception e) {
+            common.RSLogger.SetUpLogInfo("websocket service initial error.");
+            common.RSLogger.ErrorLogInfo("websocket service initial error.", e);
+
         }
 
     }
@@ -96,8 +104,8 @@ public class AssignTrial {
             //register success, send pushid to client.
             //just send success to client.
             WebSocketHelper.sendTextToClient(session, formationResult.formationResult(ResponseResultCode.Success, new ExecuteResultParam()));
-            //search data from db and send to client.
-            RSThreadPool.ThreadPoolExecute(new ManualPushMsg(msgClient));
+            //search data from db by pushid, and send to client.
+            //RSThreadPool.ThreadPoolExecute(new ManualPushMsg(msgClient));
         } catch (Exception e) {
             common.RSLogger.ErrorLogInfo("webSocket onMessage error." + e.getLocalizedMessage(), e);
             System.out.printf(e.getLocalizedMessage());
