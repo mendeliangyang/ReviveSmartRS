@@ -228,7 +228,7 @@ public class DBHelper {
         StringBuffer tempSql = new StringBuffer();
         StringBuffer tempColumn = new StringBuffer();
         StringBuffer tempValue = new StringBuffer();
-        String identityKeyName = null, strUUIDTemp = null;
+        String strUUIDTemp = null;
         SqlFactoryResultModel sqlResultModel = new SqlFactoryResultModel();
         TableInfoModel pTableInfo = null;
         TableDetailModel tempTableColumnDetail = null;
@@ -244,9 +244,7 @@ public class DBHelper {
 
             //Set tableIterator = FindTableDetail(paramModel.db_tableName, paramModel.rsid);
             //get identityKey , inserted with get identity value.
-            identityKeyName = pTableInfo.identityKey.name; // FindTableIdentityKey(pTableInfo.tableDetails);
-
-            if (identityKeyName != null) {
+            if (pTableInfo.identityKey != null) {
                 tempSql.append("SET NOCOUNT ON ");
             }
 
@@ -286,8 +284,8 @@ public class DBHelper {
                 tempSql.append(tempValue.substring(0, tempValue.length() - 1)).append(")");
             }
 
-            if (identityKeyName != null) {
-                tempSql.append(" SELECT @@IDENTITY AS ").append(identityKeyName);
+            if (pTableInfo.identityKey != null) {
+                tempSql.append(" SELECT @@IDENTITY AS ").append(pTableInfo.identityKey.name);
             }
             RSLogger.LogInfo(tempSql.toString());
             sqlResultModel.strSql = tempSql.toString();
@@ -299,7 +297,6 @@ public class DBHelper {
             tempSql = null;
             tempColumn = null;
             tempValue = null;
-            identityKeyName = null;
             tempTableColumnDetail = null;
             singlePrimary = null;
             pTableInfo = null;
@@ -360,7 +357,7 @@ public class DBHelper {
                     paramModel.pkValues = new HashMap<>();
                 }
                 paramModel.pkValues.put(singlePrimary.name, paramModel.pkValue);
-                
+
                 if (singlePrimary.dataType == DataBaseTypeEnum.number || singlePrimary.dataType == DataBaseTypeEnum.decimal) {
                     sqlsb.append(" ").append(paramModel.pkValue).append(" ");
                 } else if (singlePrimary.dataType == DataBaseTypeEnum.charset || singlePrimary.dataType == DataBaseTypeEnum.date || singlePrimary.dataType == DataBaseTypeEnum.time || singlePrimary.dataType == DataBaseTypeEnum.datetime) {

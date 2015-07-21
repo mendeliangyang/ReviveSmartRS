@@ -6,6 +6,13 @@
         <dbName>ReviveSmartDB</dbName>
         <dbUser>sa</dbUser>
         <dbpwd>123456</dbpwd>
+        <pushMsg pushId="ReviveSmartDBTestPush">
+            <dbTable>rsUser</dbTable>
+            <sqlFilter>rs_NickName='1'</sqlFilter>
+            <pageSize>0</pageSize>
+            <!--            <dbColumn>Uphotodata</dbColumn>
+            <dbURLColumn>Uphotodata</dbURLColumn>-->
+        </pushMsg>
     </systemSet>
     <systemSet id="tempTest">
         <dbAddress>192.168.100.64</dbAddress>
@@ -38,14 +45,14 @@
             <dbTable>BankCard</dbTable>
             <sqlFilter>ChandleStatus ='未审批'</sqlFilter>
             <pageSize>0</pageSize>
-<!--            <dbColumn>Uphotodata</dbColumn>
+            <!--            <dbColumn>Uphotodata</dbColumn>
             <dbURLColumn>Uphotodata</dbURLColumn>-->
         </pushMsg>
-       <pushMsg pushId="BankCardApply">
+        <pushMsg pushId="BankCardApply">
             <dbTable>BankCard</dbTable>
             <sqlFilter>ChandleStatus ='已审批'</sqlFilter>
             <pageSize>0</pageSize>
-<!--            <dbColumn>Uphotodata</dbColumn>
+            <!--            <dbColumn>Uphotodata</dbColumn>
             <dbURLColumn>Uphotodata</dbURLColumn>-->
         </pushMsg>
     </systemSet>

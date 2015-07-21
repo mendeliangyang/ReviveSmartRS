@@ -12,6 +12,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import webSocket.AssignTrial;
 
 /**
  *
@@ -55,6 +56,12 @@ public class ReadDeploySetServlet extends HttpServlet {
         } catch (Exception e) {
             common.RSLogger.SetUpLogInfo(String.format("start service error step readDBInformation,%s", e.getLocalizedMessage()));
             common.RSLogger.ErrorLogInfo(String.format("start service error step readDBInformation,%s", e.getLocalizedMessage()), e);
+        }
+        try {
+            AssignTrial.initialWebSocketService();
+        } catch (Exception e) {
+            common.RSLogger.SetUpLogInfo(String.format("start service error step initialWebSocketService,%s", e.getLocalizedMessage()));
+            common.RSLogger.ErrorLogInfo(String.format("start service error step initialWebSocketService,%s", e.getLocalizedMessage()), e);
         }
 
     }

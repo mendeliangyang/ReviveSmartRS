@@ -38,7 +38,7 @@ public class Decoy implements Runnable {
                         //这个key下面没有session 不需要查询数据
                         continue;
                     }
-                    if (msgFilterModel.dbTable.equals(msg)) {
+                    if (msgFilterModel.dbTable.equals(msg.tbName)) {
                         //启动新的线程处理该数据变动
 //                            Thread reapDataThread = new Thread(new ReapData(msgFilterModel, sessions));
 //                            reapDataThread.start();

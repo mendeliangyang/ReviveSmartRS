@@ -14,6 +14,7 @@ import common.model.ResponseResultCode;
 import common.model.ReviveRSParamModel;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import javax.websocket.Session;
 import net.sf.json.JSONArray;
@@ -67,9 +68,9 @@ public class ReapData implements Runnable {
                         Iterator iteratorRows = rowsCountJson.iterator();
                         JSONObject rowsCount = (JSONObject) iteratorRows.next();
                         result.ResultJsonObject.accumulate("rowsCount", rowsCount.getString("rowsCount"));
-
+                        
                         //add pkvalues to result
-                        result.ResultJsonObject.accumulate("pkValue", msgFilterModel.varyData.pkValues_update);
+                        result.ResultJsonObject.accumulate("pkValues",  msgFilterModel.varyData.pkValues_updates);
                     }
                     strResult = formationResult.formationResult(ResponseResultCode.Success, "token", msgFilterModel.pushMsgId, new ExecuteResultParam(result.ResultJsonObject));
                 } else {
@@ -79,7 +80,11 @@ public class ReapData implements Runnable {
                 result = DBHelper.ExecuteSqlSelect(paramModel.rsid, DBHelper.SqlSelectCountFactory(paramModel));
                 if (result.ResultCode >= 0) {
                     //add pkvalues to result
-                    result.ResultJsonObject.accumulate("pkValue", msgFilterModel.varyData.pkValues_update);
+//                    JSONArray jsonPKvalues = new JSONArray();
+//                    for (Map<String, String> pkValues_update : msgFilterModel.varyData.pkValues_updates) {
+//                        jsonPKvalues.add(pkValues_update);
+//                    }
+                    result.ResultJsonObject.accumulate("pkValues", msgFilterModel.varyData.pkValues_updates);
                     strResult = formationResult.formationResult(ResponseResultCode.Success, "token", msgFilterModel.pushMsgId, new ExecuteResultParam(result.ResultJsonObject));
                 } else {
                     strResult = formationResult.formationResult(ResponseResultCode.Error, "token", msgFilterModel.pushMsgId, new ExecuteResultParam(result.errMsg, paramModel.sql));

@@ -6,6 +6,7 @@
 package common.model;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
  *
@@ -21,9 +22,13 @@ public class DataVaryModel {
     public int varyType;
 
     public Map<String, String> pkValues_insert; //主键值
+    public Set<Map<String, String>> pkValues_inserts ;//添加的主键集合
     
     public Map<String, String> pkValues_update; //主键值
+    public Set<Map<String, String>> pkValues_updates ;//修改的主键集合
     
     public Map<String, String> pkValues_delete; //主键值
+    public Set<Map<String, String>> pkValues_deletes ;//删除的主键集合
+    
 
 }

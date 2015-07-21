@@ -39,33 +39,26 @@ public class AssignTrial {
 
     final static IAnalyzeMessage analyzeMsg = new AnalyzeMsg();
 
-    static {
+    public static void initialWebSocketService() throws Exception {
         //根据配置的 pushid 分配需要推送的消息队列
         //初始化map
-        try {
-            Set<SystemSetModel> systemSet = common.DeployInfo.GetSystemSets();
-            for (Iterator<SystemSetModel> iterator = systemSet.iterator(); iterator.hasNext();) {
-                SystemSetModel next = iterator.next();
-                for (Iterator<MsgFilterModel> iterator1 = next.msgFilters.iterator(); iterator1.hasNext();) {
-                    MsgFilterModel next1 = iterator1.next();
-                    pushMap.put(next1, new HashSet<>());
-                }
+        Set<SystemSetModel> systemSet = common.DeployInfo.GetSystemSets();
+        for (Iterator<SystemSetModel> iterator = systemSet.iterator(); iterator.hasNext();) {
+            SystemSetModel next = iterator.next();
+            for (Iterator<MsgFilterModel> iterator1 = next.msgFilters.iterator(); iterator1.hasNext();) {
+                MsgFilterModel next1 = iterator1.next();
+                pushMap.put(next1, new HashSet<>());
             }
+        }
             //启动线程
 //            Thread decoyThread = new Thread(new Decoy(), "decoyThread");
 //            decoyThread.start();
-            //启动守护线程
+        //启动守护线程
 //            Thread reapDataGuardThread = new Thread(new ReapDataGuard(decoyThread), "reapDataGuardThread");
 //            reapDataGuardThread.start();
-            //scheduledThreadPoolExecutor replace thread , guardThread
-            common.RSThreadPool.scheduledThreadPoolExecutor(new Decoy(), 1, 4000, 4000, TimeUnit.MILLISECONDS);
-            common.RSLogger.SetUpLogInfo("websocket service initial success.");
-
-        } catch (Exception e) {
-            common.RSLogger.SetUpLogInfo("websocket service initial error.");
-            common.RSLogger.ErrorLogInfo("websocket service initial error.", e);
-
-        }
+        //scheduledThreadPoolExecutor replace thread , guardThread
+        common.RSThreadPool.scheduledThreadPoolExecutor(new Decoy(), 1, 4000, 10000, TimeUnit.MILLISECONDS);
+        common.RSLogger.SetUpLogInfo("websocket service initial success.");
 
     }
 
