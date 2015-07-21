@@ -233,7 +233,7 @@ public class DBHelper {
         TableInfoModel pTableInfo = null;
         TableDetailModel tempTableColumnDetail = null;
         TableDetailModel singlePrimary = null;
-        boolean primaryColumnHasValue = true;
+        boolean primaryColumnNoValue = true;
         try {
 
             pTableInfo = FindTableInformation(paramModel.db_tableName, paramModel.rsid);
@@ -266,12 +266,12 @@ public class DBHelper {
                 }
                 //primaryColumnHasValue  params has primary value，don't need uuid
                 if (pTableInfo.CheckColumnIsPrimary(key)) {
-                    primaryColumnHasValue = false;
+                    primaryColumnNoValue = false;
                 }
                 key = null;
             }
             // qualification 1 primariy column no value , 2 primary column data type is charset, 3 primary column is  single column
-            if (primaryColumnHasValue) {
+            if (primaryColumnNoValue) {
                 singlePrimary = pTableInfo.getPrimariyColumn();
                 if (singlePrimary != null && singlePrimary.dataType == DataBaseTypeEnum.charset) {
                     sqlResultModel.columnValue = new CollectionsUtils.ConstMap<>();
@@ -355,7 +355,12 @@ public class DBHelper {
                     throw new Exception(String.format("error: primaryKey: %s not find. tableName:%s, rsid:%s", singlePrimary.name, paramModel.db_tableName, paramModel.rsid));
                 }
                 sqlsb.append(singlePrimary.name).append("=");
-
+                // fill up pkValues for ws-ms.
+                if (paramModel.pkValues == null) {
+                    paramModel.pkValues = new HashMap<>();
+                }
+                paramModel.pkValues.put(singlePrimary.name, paramModel.pkValue);
+                
                 if (singlePrimary.dataType == DataBaseTypeEnum.number || singlePrimary.dataType == DataBaseTypeEnum.decimal) {
                     sqlsb.append(" ").append(paramModel.pkValue).append(" ");
                 } else if (singlePrimary.dataType == DataBaseTypeEnum.charset || singlePrimary.dataType == DataBaseTypeEnum.date || singlePrimary.dataType == DataBaseTypeEnum.time || singlePrimary.dataType == DataBaseTypeEnum.datetime) {

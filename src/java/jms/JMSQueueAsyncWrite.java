@@ -5,7 +5,7 @@
  */
 package jms;
 
-import java.util.Date;
+import common.model.DataVaryModel;
 import java.util.HashSet;
 
 /**
@@ -14,17 +14,28 @@ import java.util.HashSet;
  */
 public class JMSQueueAsyncWrite implements IJMSQueueAsyncWrite {
 
-    
     @Override
-    public boolean AsyncWriteMessage(HashSet<String> msgs, String msg) {
+    public boolean AsyncWriteMessage(HashSet<DataVaryModel> msgs, DataVaryModel msg) {
         synchronized (msgs) {
-            for (String msgTemp : msgs) {
-                if (msg.equals(msgTemp)) {
-                    return false;
+            for (DataVaryModel msg1 : msgs) {
+                if (msg1.tbName.equals(msg.tbName)) {
+                    if (msg1.varyType == 1) {
+                        msg1.pkValues_insert.putAll(msg.pkValues_insert);
+                    } else if (msg1.varyType == 2) {
+                        msg1.pkValues_update.putAll(msg.pkValues_update);
+                    } else if (msg1.varyType == 4) {
+                        msg1.pkValues_delete.putAll(msg.pkValues_delete);
+                    }
+                    msg1.varyType = msg1.varyType | msg.varyType;
+
                 }
             }
+//            for (String msgTemp : msgs) {
+//                if (msg.equals(msgTemp)) {
+//                    return false;
+//                }
+//            }
             msgs.add(msg);
-            System.out.println("write msgCount: "+msgs.size()+"    time: "+new Date());
             return true;
         }
     }

@@ -17,9 +17,11 @@ import java.util.concurrent.TimeUnit;
 public class RSThreadPool {
 
     static ExecutorService rsCachedThreadPool = null;
+    static ExecutorService wsSingleThreadWrite = null;
 
     public static boolean initialTheadPool() {
         rsCachedThreadPool = Executors.newCachedThreadPool();
+        wsSingleThreadWrite = Executors.newSingleThreadExecutor();
         return true;
     }
 
@@ -27,10 +29,14 @@ public class RSThreadPool {
         rsCachedThreadPool.execute(run);
     }
 
-    public static void singleThreadExecuter(Runnable run) {
-        ExecutorService exec = Executors.newSingleThreadExecutor();
-        exec.execute(run);
+    /**
+     * write message to ws-ms queue.
+     * @param run 
+     */
+    public static void wsWriteMsgSingleThreadPool(Runnable run) {
+        wsSingleThreadWrite.execute(run);
     }
+    
     
     /**
      * definite time take

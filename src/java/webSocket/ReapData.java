@@ -67,17 +67,22 @@ public class ReapData implements Runnable {
                         Iterator iteratorRows = rowsCountJson.iterator();
                         JSONObject rowsCount = (JSONObject) iteratorRows.next();
                         result.ResultJsonObject.accumulate("rowsCount", rowsCount.getString("rowsCount"));
+
+                        //add pkvalues to result
+                        result.ResultJsonObject.accumulate("pkValue", msgFilterModel.varyData.pkValues_update);
                     }
-                    strResult = formationResult.formationResult(ResponseResultCode.Success,"token",msgFilterModel.pushMsgId, new ExecuteResultParam( result.ResultJsonObject));
+                    strResult = formationResult.formationResult(ResponseResultCode.Success, "token", msgFilterModel.pushMsgId, new ExecuteResultParam(result.ResultJsonObject));
                 } else {
-                    strResult = formationResult.formationResult(ResponseResultCode.Error, "token",msgFilterModel.pushMsgId, new ExecuteResultParam(result.errMsg,paramModel.sql));
+                    strResult = formationResult.formationResult(ResponseResultCode.Error, "token", msgFilterModel.pushMsgId, new ExecuteResultParam(result.errMsg, paramModel.sql));
                 }
             } else {
                 result = DBHelper.ExecuteSqlSelect(paramModel.rsid, DBHelper.SqlSelectCountFactory(paramModel));
                 if (result.ResultCode >= 0) {
-                    strResult = formationResult.formationResult(ResponseResultCode.Success,"token",msgFilterModel.pushMsgId, new ExecuteResultParam( result.ResultJsonObject));
+                    //add pkvalues to result
+                    result.ResultJsonObject.accumulate("pkValue", msgFilterModel.varyData.pkValues_update);
+                    strResult = formationResult.formationResult(ResponseResultCode.Success, "token", msgFilterModel.pushMsgId, new ExecuteResultParam(result.ResultJsonObject));
                 } else {
-                    strResult = formationResult.formationResult(ResponseResultCode.Error, "token",msgFilterModel.pushMsgId, new ExecuteResultParam(result.errMsg,paramModel.sql));
+                    strResult = formationResult.formationResult(ResponseResultCode.Error, "token", msgFilterModel.pushMsgId, new ExecuteResultParam(result.errMsg, paramModel.sql));
                 }
             }
             closeSessions = new HashSet<>();
@@ -96,7 +101,7 @@ public class ReapData implements Runnable {
         } catch (Exception ex) {
             common.RSLogger.ErrorLogInfo("ReapData error." + ex.getLocalizedMessage());
         } finally {
-            common.UtileSmart.FreeObjects(formationResult, paramModel, strResult, result, result1, closeSessions);
+            common.UtileSmart.FreeObjects(formationResult, paramModel, strResult, result, result1, closeSessions, msgFilterModel);
         }
     }
 

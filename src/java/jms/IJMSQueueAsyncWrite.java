@@ -5,6 +5,7 @@
  */
 package jms;
 
+import common.model.DataVaryModel;
 import java.util.HashSet;
 
 /**
@@ -12,5 +13,5 @@ import java.util.HashSet;
  * @author Administrator
  */
 public interface IJMSQueueAsyncWrite {
-    public boolean AsyncWriteMessage(HashSet<String> msgs,String msg);
+    public boolean AsyncWriteMessage(HashSet<DataVaryModel> msgs,DataVaryModel msg);
 }

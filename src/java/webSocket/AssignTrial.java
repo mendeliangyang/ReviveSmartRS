@@ -6,7 +6,6 @@
 package webSocket;
 
 import common.FormationResult;
-import common.RSThreadPool;
 import common.VerificationSign;
 import common.model.ExecuteResultParam;
 import common.model.MsgClientPushParam;

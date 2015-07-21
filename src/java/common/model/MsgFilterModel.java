@@ -25,4 +25,7 @@ public class MsgFilterModel {
     public String buildStr; //根据条件构造的执行参数
     
     public String rsid; //
+    
+    
+    public DataVaryModel varyData;// 传递  vary ，每次 处理完成，清除该属性
 }

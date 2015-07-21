@@ -399,7 +399,7 @@ public class ReviveRS {
             resultParam = DBHelper.ExecuteSql(paramModel.rsid, DBHelper.SqlUpdateFactory(paramModel));
 
             if (resultParam.ResultCode >= 0) {
-                JMSQueueMessage.AsyncWriteMessage(paramModel.db_tableName);
+                JMSQueueMessage.AsyncWriteMessage(paramModel.db_tableName, 2, paramModel.pkValues);
                 return formationResult.formationResult(ResponseResultCode.Success, new ExecuteResultParam());
             } else {
                 return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(resultParam.errMsg, param));
@@ -466,7 +466,7 @@ public class ReviveRS {
 
             if (resultParam.ResultCode >= 0) {
                 //notify data changed
-                JMSQueueMessage.AsyncWriteMessage(paramModel.db_tableName);
+                JMSQueueMessage.AsyncWriteMessage(paramModel.db_tableName, 1, paramModel.pkValues);
                 if (sqlResultModel.columnValue != null && !sqlResultModel.columnValue.isEmpty()) {
                     JSONObject resultJson = new JSONObject();
                     for (String keySet : sqlResultModel.columnValue.keySet()) {

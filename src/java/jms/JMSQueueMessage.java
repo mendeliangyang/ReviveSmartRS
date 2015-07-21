@@ -5,8 +5,9 @@
  */
 package jms;
 
-import java.util.Date;
+import common.model.DataVaryModel;
 import java.util.HashSet;
+import java.util.Map;
 
 /**
  *
@@ -14,45 +15,56 @@ import java.util.HashSet;
  */
 public class JMSQueueMessage {
 
-    private final static HashSet<String> msgQueue = new HashSet<>();
+    private final static HashSet<DataVaryModel> msgQueue = new HashSet<>();
 
 //    public static HashSet<String> GetMsgQueueTranscript() {
 //        return (HashSet<String>) msgQueue.clone();
 //    }
-    public static HashSet<String> HandelMsgQueue() {
+    public static HashSet<DataVaryModel> HandelMsgQueue() {
         if (msgQueue.isEmpty()) {
             return null;
         }
-        HashSet<String> newMsg = null;
+        HashSet<DataVaryModel> newMsg = null;
         synchronized (msgQueue) {
-            System.out.println("handel msgCount: "+msgQueue.size()+"    time: "+new Date());
-            newMsg = (HashSet<String>) msgQueue.clone();
+            newMsg = (HashSet<DataVaryModel>) msgQueue.clone();
             msgQueue.clear();
         }
         return newMsg;
     }
 
-    public static void AsyncWriteMessage(String msg) {
+    public static void AsyncWriteMessage(String tbName, int varyType, Map<String, String> pkValues) {
         try {
-            Thread t = new Thread(new AsyncThreadWriteMsg(msg));
-            t.start();
+            DataVaryModel msgModel = new DataVaryModel();
+            msgModel.tbName = tbName;
+
+            msgModel.varyType = varyType;
+            if (msgModel.varyType == 1) {
+                msgModel.pkValues_insert = pkValues;
+            } else if (msgModel.varyType == 2) {
+                msgModel.pkValues_update = pkValues;
+            } else if (msgModel.varyType == 4) {
+                msgModel.pkValues_delete = pkValues;
+            }
+//            Thread t = new Thread(new AsyncThreadWriteMsg(msg));
+//            t.start();
+            common.RSThreadPool.wsWriteMsgSingleThreadPool(new AsyncThreadWriteMsg(msgModel));
         } catch (Exception e) {
-            common.RSLogger.ErrorLogInfo("AsyncWriteMessage error." + msg + e.getLocalizedMessage());
+            common.RSLogger.ErrorLogInfo(String.format("AsyncWriteMessage error. %s,", e.getLocalizedMessage()));
         }
     }
 
     public static class AsyncThreadWriteMsg implements Runnable {
 
         private final IJMSQueueAsyncWrite asyncWrite = new JMSQueueAsyncWrite();
-        private String message;
+        private DataVaryModel messageModel;
 
-        AsyncThreadWriteMsg(String pMsg) {
-            this.message = pMsg;
+        AsyncThreadWriteMsg(DataVaryModel pMsg) {
+            this.messageModel = pMsg;
         }
 
         @Override
         public void run() {
-            asyncWrite.AsyncWriteMessage(msgQueue, message);
+            asyncWrite.AsyncWriteMessage(msgQueue, messageModel);
         }
     }
 }
