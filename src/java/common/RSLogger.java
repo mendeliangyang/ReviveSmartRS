@@ -5,16 +5,6 @@
  */
 package common;
 
-import java.io.File;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.FileHandler;
-import java.util.logging.Formatter;
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
-import java.util.logging.Logger;
-
 public class RSLogger {
 
     public static void Initial() throws Exception {
@@ -57,21 +47,22 @@ public class RSLogger {
         sbLog = null;
     }
 
-    
     /**
      * websocket 错误日志
-     * @param logMsg 
+     *
+     * @param logMsg
      */
-    public static void wsErrorLogInfo(String logMsg){
+    public static void wsErrorLogInfo(String logMsg) {
         log4jInitialize.WSErrorLog(logMsg);
     }
-    
+
     /**
      * websocket 错误日志
+     *
      * @param logMsg
-     * @param exception 
+     * @param exception
      */
-    public static void wsErrorLogInfo(String logMsg,Exception exception){
+    public static void wsErrorLogInfo(String logMsg, Exception exception) {
         StringBuffer sbLog = new StringBuffer();
         sbLog.append("errorMessage:").append(logMsg);
         if (exception != null) {
@@ -84,7 +75,7 @@ public class RSLogger {
         sbLog.delete(0, sbLog.length());
         sbLog = null;
     }
-    
+
     public static void SetUpLogInfo(String logMsg) {
         log4jInitialize.DeployLog(logMsg);
     }

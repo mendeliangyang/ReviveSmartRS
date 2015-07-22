@@ -93,12 +93,9 @@ public class ReviveRS {
                 FileExtension = FileHelper.getExtensionName(fileName);
                 newFileName = newFileName + "." + FileExtension;
             }
-            RSLogger.LogInfo("***** fileName " + fileDisposition.getFileName());
-            RSLogger.LogInfo("***** NewName " + newFileName);
 
             String filePath = DeployInfo.GetDeployFilePath() + File.separator + newFileName;
 
-            RSLogger.LogInfo("***** filePath " + filePath);
 
             try (OutputStream fileOutputStream = new FileOutputStream(filePath)) {
                 int read = 0;
@@ -107,7 +104,6 @@ public class ReviveRS {
                     fileOutputStream.write(bytes, 0, read);
                 }
                 fileOutputStream.close();
-                RSLogger.LogInfo("File Upload Successfully");
 //        String HttpPath = "http://192.168.169.217:6060/ReviveSmartRS/FileDepot/" + newFileName;
                 return HandlerFileToDatabase(paramStr, newFileName, filePath);
             } catch (IOException e) {

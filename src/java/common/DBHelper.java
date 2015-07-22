@@ -187,35 +187,7 @@ public class DBHelper {
         }
     }
 
-    private static Set<TableDetailModel> SearchTableDetail(String tableName, String RSID) throws Exception {
-//        StringBuffer sqlsb = new StringBuffer("SELECT sc.name,sc.type,sc.status,sc.usertype FROM syscolumns sc INNER JOIN sysobjects so ON sc.id = so.id WHERE so.name = '");
-        StringBuffer sqlsb = new StringBuffer("select  o.name as tbName , c.name,c.type, c.status,c.usertype  ,t.name as dataTypeName from sysobjects o inner join syscolumns c on c.id = o.id inner join systypes t on t.usertype = c.usertype where o.type = 'U' and o.name ='");
-        sqlsb.append(tableName);
-        sqlsb.append("'");
-
-        Set<TableDetailModel> tableDetail = new java.util.HashSet<>();
-        TableDetailModel tempColumn = null;
-        Connection conn = null;
-        Statement stmt = null;
-        ResultSet result = null;
-        try {
-            conn = DBHelper.ConnectSybase(RSID);
-            stmt = conn.createStatement();
-            result = stmt.executeQuery(sqlsb.toString());
-            while (result.next()) {
-                tempColumn = new TableDetailModel(result.getString("name"), result.getString("type"), result.getString("status"), result.getString("usertype"), "");
-                tableDetail.add(tempColumn);
-                tempColumn = null;
-            }
-        } catch (SQLException e) {
-            //e.printStackTrace();
-            RSLogger.LogInfo("SearchTableDetail error" + e.getLocalizedMessage());
-        } finally {
-            sqlsb = null;
-            DBHelper.CloseConnection(result, stmt, conn);
-        }
-        return tableDetail;
-    }
+    
 
     /**
      * 根据传入数据生成插入语句
@@ -287,7 +259,6 @@ public class DBHelper {
             if (pTableInfo.identityKey != null) {
                 tempSql.append(" SELECT @@IDENTITY AS ").append(pTableInfo.identityKey.name);
             }
-            RSLogger.LogInfo(tempSql.toString());
             sqlResultModel.strSql = tempSql.toString();
             return sqlResultModel;
         } catch (Exception e) {
@@ -885,7 +856,6 @@ public class DBHelper {
             conn = DBHelper.ConnectSybase(rsid);
             stmt = conn.createStatement();
             Integer IRows = stmt.executeUpdate(sqlStr);
-            RSLogger.LogInfo(IRows.toString() + " row changed");
             return new ExecuteResultParam(IRows);
         } catch (Exception e) {
             RSLogger.ErrorLogInfo("ExecuteSql error sql:" + sqlStr + "exception.msg" + e.getLocalizedMessage());

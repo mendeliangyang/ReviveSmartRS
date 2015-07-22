@@ -19,8 +19,6 @@ public class DBOracleHelper {
     //todo oracleHelper
     private static final String jdbcOracleDriverName = "oracle.jdbc.driver.OracleDriver";
 
-    private static final String jdbcPostgresDriverName = "org.postgresql.Driver";
-
     private Connection ASAConnect(String UserID, String Password, String Machinename, String DBName, String dbPort) {
         StringBuffer temp = null;
         // Load the Sybase Driver
@@ -35,7 +33,6 @@ public class DBOracleHelper {
             temp.append(":");
             temp.append(DBName);
             // and connect.
-            RSLogger.LogInfo(temp.toString());
             return DriverManager.getConnection(temp.toString(), UserID, Password);
         } catch (ClassNotFoundException | SQLException e) {
             RSLogger.ErrorLogInfo("get db connection error." + e.getMessage());
@@ -46,7 +43,7 @@ public class DBOracleHelper {
     }
 
     public Connection ConnectSybase(String pId) throws Exception {
-        
+
         SystemSetModel setModel = DeployInfo.GetSystemSetsByID(pId);
         if (setModel == null) {
             RSLogger.ErrorLogInfo("Could not find the db connection.");
