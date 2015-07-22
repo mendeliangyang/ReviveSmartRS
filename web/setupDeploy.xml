@@ -6,13 +6,6 @@
         <dbName>ReviveSmartDB</dbName>
         <dbUser>sa</dbUser>
         <dbpwd>123456</dbpwd>
-        <pushMsg pushId="ReviveSmartDBTestPush">
-            <dbTable>rsUser</dbTable>
-            <sqlFilter>rs_NickName='1'</sqlFilter>
-            <pageSize>0</pageSize>
-            <!--            <dbColumn>Uphotodata</dbColumn>
-            <dbURLColumn>Uphotodata</dbURLColumn>-->
-        </pushMsg>
     </systemSet>
     <systemSet id="tempTest">
         <dbAddress>192.168.100.64</dbAddress>
@@ -83,6 +76,13 @@
         <dbName>ElectornicBank</dbName>
         <dbUser>sa</dbUser>
         <dbpwd>123456</dbpwd>
+        <pushMsg pushId="ElectornicBank01">
+            <dbTable>t_grant</dbTable>
+            <sqlFilter>isok in ('0','1')</sqlFilter>
+            <pageSize>0</pageSize>
+            <!--            <dbColumn>Uphotodata</dbColumn>
+            <dbURLColumn>Uphotodata</dbURLColumn>-->
+        </pushMsg>
     </systemSet>
     <!--<systemSet id="zsTong">
         <dbAddress>192.168.100.64</dbAddress>
