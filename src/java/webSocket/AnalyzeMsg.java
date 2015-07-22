@@ -19,8 +19,8 @@ public class AnalyzeMsg implements IAnalyzeMessage {
     @Override
     public MsgClientPushParam transferMsg(String param) {
         MsgClientPushParam msgclientPush = null;
-        JSONObject jsonObj = null,jsonBody=null;
-        JSONArray jsonArrayPushIds=null;
+        JSONObject jsonObj = null, jsonBody = null;
+        JSONArray jsonArrayPushIds = null;
         try {
             //localhost:8007/ReviveSmartRS/InquireTrial
             // {"head": { "RSID":"AustraliaBank" },"body": {  "pushId":["DebitCardNum1"] }  }
@@ -31,14 +31,14 @@ public class AnalyzeMsg implements IAnalyzeMessage {
             jsonBody = jsonObj.getJSONObject("body");
             msgclientPush.userName = common.UtileSmart.GetJsonString(jsonBody, "rs_Name");
             msgclientPush.userPwd = common.UtileSmart.GetJsonString(jsonBody, "rs_Pwd");
-            jsonArrayPushIds= jsonBody.getJSONArray("pushId");
+            jsonArrayPushIds = jsonBody.getJSONArray("pushId");
             for (int i = 0; i < jsonArrayPushIds.size(); i++) {
-                msgclientPush.pushIds.add(jsonArrayPushIds.getString(i))  ;
+                msgclientPush.pushIds.add(jsonArrayPushIds.getString(i));
             }
         } catch (Exception e) {
-            common.RSLogger.ErrorLogInfo("transferMsg error. /n"+"param : "+param+" ."+e.getLocalizedMessage());
-        }finally{
-            UtileSmart.FreeObjects(jsonObj,jsonArrayPushIds);
+            common.RSLogger.wsErrorLogInfo(String.format("transferMsg error.param : %s ,error:%s .", param, e.getLocalizedMessage()), e);
+        } finally {
+            UtileSmart.FreeObjects(jsonObj, jsonArrayPushIds);
         }
         return msgclientPush;
     }

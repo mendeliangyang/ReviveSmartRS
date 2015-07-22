@@ -49,7 +49,7 @@ public class JMSQueueMessage {
 //            t.start();
             common.RSThreadPool.wsWriteMsgSingleThreadPool(new AsyncThreadWriteMsg(msgModel));
         } catch (Exception e) {
-            common.RSLogger.ErrorLogInfo(String.format("AsyncWriteMessage error. %s,", e.getLocalizedMessage()));
+            common.RSLogger.wsErrorLogInfo(String.format("AsyncWriteMessage error. %s,", e.getLocalizedMessage()),e);
         }
     }
 

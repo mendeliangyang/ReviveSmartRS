@@ -50,19 +50,15 @@ public class AssignTrial {
                 pushMap.put(next1, new HashSet<>());
             }
         }
-            //启动线程
+        //启动线程
 //            Thread decoyThread = new Thread(new Decoy(), "decoyThread");
 //            decoyThread.start();
         //启动守护线程
 //            Thread reapDataGuardThread = new Thread(new ReapDataGuard(decoyThread), "reapDataGuardThread");
 //            reapDataGuardThread.start();
         //scheduledThreadPoolExecutor replace thread , guardThread
-        common.RSThreadPool.scheduledThreadPoolExecutor(new Decoy(), 1, 4000, 10000, TimeUnit.MILLISECONDS);
+        common.RSThreadPool.scheduledThreadPoolExecutor(new Decoy(), 1, 4000, 4000, TimeUnit.MILLISECONDS);
         common.RSLogger.SetUpLogInfo("websocket service initial success.");
-
-    }
-
-    AssignTrial() throws Exception {
 
     }
 
@@ -99,14 +95,13 @@ public class AssignTrial {
             //search data from db by pushid, and send to client.
             //RSThreadPool.ThreadPoolExecute(new ManualPushMsg(msgClient));
         } catch (Exception e) {
-            common.RSLogger.ErrorLogInfo("webSocket onMessage error." + e.getLocalizedMessage(), e);
-            System.out.printf(e.getLocalizedMessage());
+            common.RSLogger.wsErrorLogInfo("webSocket onMessage error." + e.getLocalizedMessage(), e);
         }
     }
 
     @OnError
     public void onError(Session session, Throwable t) {
-        common.RSLogger.ErrorLogInfo("AssignTrial onError" + t.getLocalizedMessage(), new Exception(t));
+        common.RSLogger.wsErrorLogInfo("AssignTrial onError" + t.getLocalizedMessage(), new Exception(t));
     }
 
     @OnOpen
@@ -118,7 +113,7 @@ public class AssignTrial {
     @OnClose
     public void onClose(Session session) {
         //peers.remove(session);
-        common.RSLogger.LogInfo(String.format("AssignTrial onClose '%s' close", session.getId()));
+        common.RSLogger.wsErrorLogInfo(String.format("AssignTrial onClose '%s' close", session.getId()));
     }
 
 }

@@ -71,6 +71,7 @@ public class ReviveRS {
         RSLogger.ErrorLogInfo("测试写错误日志");
         RSLogger.LogInfo("测试normal日志写入");
         RSLogger.SetUpLogInfo("测试setUp日志写入");
+        RSLogger.wsErrorLogInfo("websocketerror write.");
         try {
             // DBHelper.initializePool();
         } catch (Exception e) {
@@ -207,25 +208,6 @@ public class ReviveRS {
 
     }
 
-    private boolean ConvertBase64ToImage(String Base64param, String filePath) {
-        if (Base64param == null) // 图像数据为空
-        {
-            return false;
-        }
-        //BASE64Decoder decoder = new BASE64Decoder();
-        try {
-            byte[] data = Base64.decodeBase64(Base64param);
-            try (OutputStream stream = new FileOutputStream(filePath)) {
-                stream.write(data);
-                stream.close();
-            }
-            return true;
-        } catch (Exception e) {
-            RSLogger.ErrorLogInfo(e.getMessage());
-            return false;
-        }
-
-    }
 
     /**
      *

@@ -63,7 +63,7 @@ public class ManualPushMsg implements Runnable {
                                 result1 = DBHelper.ExecuteSqlSelect(paramModel.rsid, DBHelper.SqlSelectCountFactory(paramModel));
 
                             } catch (Exception ex) {
-                                common.RSLogger.ErrorLogInfo(paramModel.getInformation(), ex);
+                                common.RSLogger.wsErrorLogInfo(paramModel.getInformation(), ex);
                             }
 
                             //todo  websocket 添加推送验证（登录） token  替换登录 token
@@ -82,7 +82,7 @@ public class ManualPushMsg implements Runnable {
                             try {
                                 result = DBHelper.ExecuteSqlSelect(paramModel.rsid, DBHelper.SqlSelectCountFactory(paramModel));
                             } catch (Exception ex) {
-                                common.RSLogger.ErrorLogInfo(paramModel.getInformation(), ex);
+                                common.RSLogger.wsErrorLogInfo(paramModel.getInformation(), ex);
                             }
                             if (result.ResultCode >= 0) {
                                 strResult = formationResult.formationResult(ResponseResultCode.Success, "token", msgFilterModel.pushMsgId, new ExecuteResultParam(result.ResultJsonObject));
@@ -95,7 +95,7 @@ public class ManualPushMsg implements Runnable {
                 }
             }
         } catch (Exception e) {
-            common.RSLogger.ErrorLogInfo(String.format("ManualPushMsg param : %s", paramModel.getInformation()), e);
+            common.RSLogger.wsErrorLogInfo(String.format("ManualPushMsg param : %s", paramModel.getInformation()), e);
         }
 
     }

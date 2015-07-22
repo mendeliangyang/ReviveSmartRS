@@ -122,7 +122,7 @@ public class AustraliaBankRS {
                 iRequestCount++;
             }
         } catch (Exception ex) {
-            common.RSLogger.ErrorLogInfo("ReviveSignOff error." + ex.getLocalizedMessage());
+            common.RSLogger.ErrorLogInfo("ReviveSignOff error." + ex.getLocalizedMessage(),ex);
             return formationResult.formationResult(ResponseResultCode.Error,new ExecuteResultParam(ex.getLocalizedMessage(),param ,ex));
         } finally {
             common.UtileSmart.FreeObjects(jObj, txn, jBody, byteMsg, byteRets);

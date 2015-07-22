@@ -49,7 +49,7 @@ public class Decoy implements Runnable {
                 }
             }
         } catch (Exception ex) {
-            common.RSLogger.ErrorLogInfo("Decoy error." + ex.getLocalizedMessage());
+            common.RSLogger.wsErrorLogInfo(String.format("Decoy error:%s", ex.getLocalizedMessage()), ex);
         }
 
     }

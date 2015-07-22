@@ -16,7 +16,6 @@ import org.apache.commons.codec.binary.Base64;
  */
 public class FileHelper {
 
-    
     public static boolean ConvertBase64ToImage(String Base64param, String filePath) {
         if (Base64param == null) // 图像数据为空
         {
@@ -31,12 +30,12 @@ public class FileHelper {
             }
             return true;
         } catch (Exception e) {
-            RSLogger.ErrorLogInfo(e.getMessage());
+            RSLogger.ErrorLogInfo(String.format("ConvertBase64ToImage error: %s", e.getLocalizedMessage()), e);
             return false;
         }
 
     }
-    
+
     /**
      * 获取文件扩展名
      *
@@ -73,10 +72,12 @@ public class FileHelper {
             }
         }
     }
+
     /**
      * 删除目录（文件夹）以及目录下的文件
-     * @param   sPath 被删除目录的文件路径
-     * @return  目录删除成功返回true，否则返回false
+     *
+     * @param sPath 被删除目录的文件路径
+     * @return 目录删除成功返回true，否则返回false
      */
     public boolean deleteDirectory(String sPath) {
         //如果sPath不以文件分隔符结尾，自动添加文件分隔符
@@ -106,6 +107,7 @@ public class FileHelper {
             return false;
         }
     }
+
     /**
      * 删除单个文件
      *

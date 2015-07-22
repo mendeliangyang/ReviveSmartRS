@@ -5,7 +5,6 @@
  */
 package webSocket;
 
-
 /**
  *
  * @author Administrator
@@ -29,7 +28,7 @@ public class ReapDataGuard implements Runnable {
                 }
             }
         } catch (InterruptedException ex) {
-            common.RSLogger.ErrorLogInfo("reapDataGuardThread runError."+ex.getLocalizedMessage());
+            common.RSLogger.wsErrorLogInfo(String.format("reapDataGuardThread runError:%s", ex.getLocalizedMessage()), ex);
         }
     }
 

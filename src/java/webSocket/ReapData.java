@@ -14,7 +14,6 @@ import common.model.ResponseResultCode;
 import common.model.ReviveRSParamModel;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 import javax.websocket.Session;
 import net.sf.json.JSONArray;
@@ -104,7 +103,7 @@ public class ReapData implements Runnable {
             paramModel = null;
 
         } catch (Exception ex) {
-            common.RSLogger.ErrorLogInfo("ReapData error." + ex.getLocalizedMessage());
+            common.RSLogger.wsErrorLogInfo("ReapData error." + ex.getLocalizedMessage(),ex);
         } finally {
             common.UtileSmart.FreeObjects(formationResult, paramModel, strResult, result, result1, closeSessions, msgFilterModel);
         }

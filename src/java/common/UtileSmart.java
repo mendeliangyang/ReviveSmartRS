@@ -24,38 +24,44 @@ public class UtileSmart {
         }
     }
 
-    /***
-     * 获取当前系统时间字符串  yyyyMMddHH
-     * @return 
+    /**
+     * *
+     * 获取当前系统时间字符串 yyyyMMddHH
+     *
+     * @return
      */
     public static String getCurrentDate() {
         SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHH");//设置日期格式
         return df.format(new Date());
     }
-    /***
-     * 获取当前系统时间字符串  yyyyMMddHH
-     * @return 
+
+    /**
+     * *
+     * 获取当前系统时间字符串 yyyyMMddHH
+     *
+     * @return
      */
     public static String getCurrentDateShortTime() {
         SimpleDateFormat df = new SimpleDateFormat("HHmmss");//设置日期格式
         return df.format(new Date());
     }
-    /***
-     * 获取当前系统  秒的时间字符串  ss
-     * @return 
+
+    /**
+     * *
+     * 获取当前系统 秒的时间字符串 ss
+     *
+     * @return
      */
     public static String getCurrentDateSecond() {
         SimpleDateFormat df = new SimpleDateFormat("ss");//设置日期格式
         return df.format(new Date());
     }
-    
-    
-    static Random random=new Random();
-    public static String getRandomStrbySeed(int pSeed){
-        return String.format("%d",random.nextInt(pSeed));
+
+    static Random random = new Random();
+
+    public static String getRandomStrbySeed(int pSeed) {
+        return String.format("%d", random.nextInt(pSeed));
     }
-    
-    
 
     public static short overrideParseShort(String strShort) {
         if (strShort != null && !strShort.isEmpty()) {
@@ -99,7 +105,7 @@ public class UtileSmart {
         try {
             return GetJsonString(jsonObj, strParam, false);
         } catch (Exception ex) {
-            common.RSLogger.ErrorLogInfo(ex.getLocalizedMessage());
+            common.RSLogger.ErrorLogInfo(String.format("UtileSmart: GetJsonString error:%s", ex.getLocalizedMessage()),ex);
         }
         return null;
     }
