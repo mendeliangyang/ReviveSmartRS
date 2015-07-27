@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <deploy>
     <systemSet id="ReviveSmartDB">
-        <dbAddress>192.168.169.227</dbAddress>
+        <dbAddress>192.168.100.64</dbAddress>
         <dbPort>5000</dbPort>
         <dbName>ReviveSmartDB</dbName>
         <dbUser>sa</dbUser>

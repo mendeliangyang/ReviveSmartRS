@@ -24,6 +24,7 @@ import java.io.OutputStream;
 import java.util.Iterator;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
+import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.MediaType;
 import net.sf.json.JSONArray;
@@ -33,7 +34,6 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import java.util.UUID;
 import jms.JMSQueueMessage;
-import org.apache.commons.codec.binary.Base64;
 
 /**
  * REST Web Service
@@ -55,7 +55,7 @@ public class ReviveRS {
     public ReviveRS() {
     }
 
-    @POST
+    @GET
     @Path("SayHello")
     public String SayHello() throws Exception {
         //DBHelper.ExecuteSql("microCredit", "update abc set a=1");
