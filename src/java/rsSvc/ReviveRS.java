@@ -96,7 +96,6 @@ public class ReviveRS {
 
             String filePath = DeployInfo.GetDeployFilePath() + File.separator + newFileName;
 
-
             try (OutputStream fileOutputStream = new FileOutputStream(filePath)) {
                 int read = 0;
                 final byte[] bytes = new byte[1024];
