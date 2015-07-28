@@ -9,8 +9,6 @@ import common.model.MsgFilterModel;
 import common.model.SystemSetModel;
 import java.io.File;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -121,7 +119,7 @@ public class DeployInfo {
                     .getTextContent();
             httpPort = doc.getElementsByTagName("httpPort").item(0)
                     .getTextContent();
-            httpTimeOut = UtileSmart.overrideParseShort(doc.getElementsByTagName("httpPort").item(0)
+            httpTimeOut = UtileSmart.overrideParseShort(doc.getElementsByTagName("httpTimeOut").item(0)
                     .getTextContent());
 
             //配置http文件目录
