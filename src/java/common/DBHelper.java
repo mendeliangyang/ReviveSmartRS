@@ -6,7 +6,6 @@
 package common;
 
 //Import the necessary classes
-import com.sun.faces.util.CollectionsUtils;
 import common.model.ExecuteResultParam;
 import common.model.DataBaseTypeEnum;
 import common.model.DBDetailModel;
@@ -244,7 +243,7 @@ public class DBHelper {
             if (primaryColumnNoValue) {
                 singlePrimary = pTableInfo.getPrimariyColumn();
                 if (singlePrimary != null && singlePrimary.dataType == DataBaseTypeEnum.charset) {
-                    sqlResultModel.columnValue = new CollectionsUtils.ConstMap<>();
+                    sqlResultModel.columnValue = new HashMap<>(); //new CollectionsUtils.ConstMap<>();
                     strUUIDTemp = UUID.randomUUID().toString();
                     sqlResultModel.columnValue.put(singlePrimary.name, strUUIDTemp);
                     tempSql.append(tempColumn).append(singlePrimary.name).append(" ) VALUES (");

@@ -84,6 +84,20 @@
             <dbURLColumn>Uphotodata</dbURLColumn>-->
         </pushMsg>
     </systemSet>
+    <systemSet id="manageSystem">
+        <dbAddress>192.168.169.217</dbAddress>
+        <dbPort>5000</dbPort>
+        <dbName>manageSystem</dbName>
+        <dbUser>sa</dbUser>
+        <dbpwd>123456</dbpwd>
+    </systemSet>
+     <systemSet id="advisory">
+        <dbAddress>192.168.169.217</dbAddress>
+        <dbPort>5000</dbPort>
+        <dbName>advisory</dbName>
+        <dbUser>sa</dbUser>
+        <dbpwd>123456</dbpwd>
+    </systemSet>
     <!--<systemSet id="zsTong">
         <dbAddress>192.168.100.64</dbAddress>
         <dbPort>5000</dbPort>
