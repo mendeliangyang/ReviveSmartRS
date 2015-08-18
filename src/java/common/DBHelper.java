@@ -29,8 +29,8 @@ import snaq.db.ConnectionPool;
 
 public class DBHelper {
 
-    private static int ConnectionPoolTimeout = 4000;//4s，超时时间
-    private static int GetConnectionFromPoolTimeout = 10000;//从连接池中获取链接超时时间10s，
+    private static final int ConnectionPoolTimeout = 4000;//4s，超时时间
+    private static final int GetConnectionFromPoolTimeout = 10000;//从连接池中获取链接超时时间10s，
 
     private static Map<String, ConnectionPool> mapConnectionPool = new HashMap<>();
 
@@ -186,8 +186,6 @@ public class DBHelper {
         }
     }
 
-    
-
     /**
      * 根据传入数据生成插入语句
      *
@@ -226,7 +224,9 @@ public class DBHelper {
                 String key = (String) keys.next();
                 tempColumn.append(key).append(" ,");
                 tempTableColumnDetail = pTableInfo.getColumnDetail(key);
-                if (tempTableColumnDetail.dataType == DataBaseTypeEnum.number || tempTableColumnDetail.dataType == DataBaseTypeEnum.decimal) {
+                if (paramModel.db_valueColumns.get(key).equals("db_defaultV")) {
+                    tempValue.append(" ").append("default").append(" ,");
+                } else if (tempTableColumnDetail.dataType == DataBaseTypeEnum.number || tempTableColumnDetail.dataType == DataBaseTypeEnum.decimal) {
                     tempValue.append(" ").append(paramModel.db_valueColumns.get(key)).append(" ,");
                 } else if (tempTableColumnDetail.dataType == DataBaseTypeEnum.charset || tempTableColumnDetail.dataType == DataBaseTypeEnum.date || tempTableColumnDetail.dataType == DataBaseTypeEnum.time || tempTableColumnDetail.dataType == DataBaseTypeEnum.datetime) {
                     tempValue.append("'").append(paramModel.db_valueColumns.get(key)).append("' ,");
@@ -301,7 +301,9 @@ public class DBHelper {
                 String key = (String) keys.next();
                 tempTableColumnDetail = pTableInfo.getColumnDetail(key);
                 sqlsb.append(key).append("= ");
-                if (tempTableColumnDetail.dataType == DataBaseTypeEnum.number || tempTableColumnDetail.dataType == DataBaseTypeEnum.decimal) {
+                if (paramModel.db_valueColumns.get(key).equals("db_defaultV")) {
+                    sqlsb.append(" ").append("default").append(" ,");
+                } else if (tempTableColumnDetail.dataType == DataBaseTypeEnum.number || tempTableColumnDetail.dataType == DataBaseTypeEnum.decimal) {
                     sqlsb.append(" ").append(paramModel.db_valueColumns.get(key)).append(" ,");
                 } else if (tempTableColumnDetail.dataType == DataBaseTypeEnum.charset || tempTableColumnDetail.dataType == DataBaseTypeEnum.date || tempTableColumnDetail.dataType == DataBaseTypeEnum.time || tempTableColumnDetail.dataType == DataBaseTypeEnum.datetime) {
                     sqlsb.append("'").append(paramModel.db_valueColumns.get(key)).append("'  ,");
@@ -838,7 +840,7 @@ public class DBHelper {
     }
 
     /**
-     * 执行sql语句
+     * 执行sql语句 增删改
      *
      * @param rsid
      * @param sqlStr
@@ -909,6 +911,87 @@ public class DBHelper {
             DBHelper.CloseConnection(result, stmt, conn);
         }
         return new ExecuteResultParam(0, "", table);
+    }
+
+    public static Map<String, Map<String, String>> ExecuteSqlSelectReturnMap(String rsid, String sqlStr, String TableName) throws Exception {
+        Connection conn = null;
+        Statement stmt = null;
+        ResultSet result = null;
+        TableInfoModel pTableInfo = null;
+        TableDetailModel singlePrimary = null;
+        try {
+
+            pTableInfo = FindTableInformation(TableName, rsid);
+
+            if (pTableInfo == null) {
+                throw new Exception(String.format("ExecuteSqlSelectReturnMap could not find table's %s information.rsid's %s", TableName, rsid));
+            }
+
+            singlePrimary = pTableInfo.getPrimariyColumn();
+
+            conn = DBHelper.ConnectSybase(rsid);
+            stmt = conn.createStatement();
+            result = stmt.executeQuery(sqlStr);
+            ResultSetMetaData rsmd = result.getMetaData();
+            int columnCount = rsmd.getColumnCount();
+
+            Map<String, String> rowMap = null;
+            Map<String, Map<String, String>> map = new HashMap<>();
+
+            while (result.next()) {
+                rowMap = new HashMap<>();
+                for (int j = 1; j <= columnCount; j++) {
+//                    rowMap.put(rsmd.getColumnName(j), result.getString(rsmd.getColumnName(j)));
+                    rowMap.put(rsmd.getColumnLabel(j), result.getString(j));
+
+                }
+                map.put(result.getString(singlePrimary.name), rowMap);
+            }
+            rsmd = null;
+            result.close();
+            return map;
+        } catch (SQLException e) {
+            //e.printStackTrace();
+            RSLogger.ErrorLogInfo("ExecuteSqlSelectReturnMap ExecuteSqlSelect err sql:" + sqlStr + "exception.msg" + e.getLocalizedMessage(), e);
+            throw new Exception("ExecuteSqlSelectReturnMap ExecuteSqlSelect err sql:" + sqlStr + "exception.msg" + e.getLocalizedMessage());
+
+        } finally {
+            DBHelper.CloseConnection(result, stmt, conn);
+        }
+    }
+
+    /**
+     * 执行sql语句查询
+     *
+     * @param rsid
+     * @param sqlStr
+     * @return
+     */
+    public static String ExecuteSqlSelectOne(String rsid, String sqlStr) throws Exception {
+        Connection conn = null;
+        Statement stmt = null;
+        ResultSet result = null;
+        String resultStr = null;
+        try {
+            conn = DBHelper.ConnectSybase(rsid);
+            stmt = conn.createStatement();
+            result = stmt.executeQuery(sqlStr);
+            ResultSetMetaData rsmd = result.getMetaData();
+            int columnCount = rsmd.getColumnCount();
+            if (result.getRow() > 1 || result.getRow() < 0) {
+                return resultStr;
+            }
+            result.next();
+            resultStr = result.getString(1);
+            rsmd = null;
+            result.close();
+
+        } catch (SQLException e) {
+            RSLogger.ErrorLogInfo("ExecuteSqlSelect err sql:" + sqlStr + "exception.msg" + e.getLocalizedMessage());
+        } finally {
+            DBHelper.CloseConnection(result, stmt, conn);
+        }
+        return resultStr;
     }
 
     /**
@@ -1142,7 +1225,7 @@ public class DBHelper {
         Set<TableInfoModel> tableInfos = new HashSet<>();
         //获取数据库连接
         try {
-            String sqlForTableName = "select ob.* from sysobjects ob where ob.type='U' ";
+            String sqlForTableName = "select ob.* from sysobjects ob where ob.type in ('U','V') ";
             String sqlInsertTableInfo = null;
             StringBuffer sqlTableDetailWhere = new StringBuffer();
             conn = DBHelper.ConnectSybase(rsid);
@@ -1164,7 +1247,7 @@ public class DBHelper {
             }
             result.close();
             //添加用户表的数据类型
-            sqlForTableName = String.format("select c.id as id, c.length as length , o.name as tbName , c.name,c.type, c.status,c.usertype  ,t.name as dataTypeName from sysobjects o inner join syscolumns c on c.id = o.id inner join systypes t on t.usertype = c.usertype where o.type = 'U' and o.name in (%s) order by c.id", sqlTableDetailWhere.subSequence(0, sqlTableDetailWhere.lastIndexOf(",")));
+            sqlForTableName = String.format("select c.id as id, c.length as length , o.name as tbName , c.name,c.type, c.status,c.usertype  ,t.name as dataTypeName from sysobjects o inner join syscolumns c on c.id = o.id inner join systypes t on t.usertype = c.usertype where o.type in ('U','V') and o.name in (%s) order by c.id", sqlTableDetailWhere.subSequence(0, sqlTableDetailWhere.lastIndexOf(",")));
             ResultSet result1 = stmt.executeQuery(sqlForTableName);
             TableDetailModel tempTabelDetail = null;
             while (result1.next()) {

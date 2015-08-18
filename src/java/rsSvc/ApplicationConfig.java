@@ -29,9 +29,11 @@ public class ApplicationConfig extends Application {
         resources.add(rsSvc.AustraliaBankRS.AustraliaBankRS.class);
         resources.add(rsSvc.Electornic.ElectornicRS.class);
         resources.add(rsSvc.FileDepotRS.class);
+        resources.add(rsSvc.ManageSystem.MamageSystemResource.class);
         resources.add(rsSvc.RESTCorsDemoRequestFilter.class);
         resources.add(rsSvc.RESTCorsDemoResponseFilter.class);
         resources.add(rsSvc.ReviveRS.class);
         resources.add(rsSvc.ReviveSign.class);
+        resources.add(rsSvc.advisory.AdvisoryBusResource.class);
     }
 }

@@ -1,0 +1,213 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package rsSvc.ManageSystem;
+
+import common.DBHelper;
+import common.DeployInfo;
+import common.FormationResult;
+import common.UtileSmart;
+import common.model.ExecuteResultParam;
+import common.model.ResponseResultCode;
+import java.util.HashMap;
+import java.util.Map;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+
+/**
+ * REST Web Service
+ *
+ * @author Administrator
+ */
+@Path("mamageSystem")
+public class MamageSystemResource {
+
+    MamageSystemAnalyzeParam mamageSysAnalyze = new MamageSystemAnalyzeParam();
+    private final FormationResult formationResult = new FormationResult();
+    @Context
+    private UriInfo context;
+
+    /**
+     * Creates a new instance of MamageSystemResource
+     */
+    public MamageSystemResource() {
+    }
+
+    @POST
+    @Path("DeleteOrg")
+    public String DeleteOrg(String param) {
+        String paramKey_orgNum = "orgNum";
+        ExecuteResultParam resultParam = null;
+        String sqlStr = null, selectResultStr = null;
+        Map<String, Object> paramMap = null;
+        try {
+            paramMap = new HashMap<String, Object>();
+
+            paramMap.put(paramKey_orgNum, null);
+
+            mamageSysAnalyze.AnalyzeParamBodyToMap(param, paramMap);
+            //SELECT count(*) as orgUpNumCount FROM organization where orgUpNum='%s'
+
+            sqlStr = String.format("SELECT count(*) as orgUpNumCount FROM organization where orgUpNum='%s'",
+                    UtileSmart.getStringFromMap(paramMap, paramKey_orgNum));
+
+            selectResultStr = DBHelper.ExecuteSqlSelectOne(mamageSysAnalyze.getRSID(), sqlStr);
+            if (selectResultStr == null) {
+                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("该机构不存在", param));
+                //new ExecuteResultParam("该问题已经处理，不能再进行操作", param)
+            } else if (Integer.parseInt(selectResultStr) != 0) {
+                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("该机构下存在子机构不能删除", param));
+            }
+            sqlStr = String.format("SELECT count(*) as deviceCount FROM device where deviceOrgNo='%s'",
+                    UtileSmart.getStringFromMap(paramMap, paramKey_orgNum));
+
+            selectResultStr = DBHelper.ExecuteSqlSelectOne(mamageSysAnalyze.getRSID(), sqlStr);
+            if (selectResultStr != null && Integer.parseInt(selectResultStr) != 0) {
+                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("该机构下存设备不能删除", param));
+            }
+            sqlStr = String.format("SELECT count(*) userCount FROM userInfo where userOrgNum ='%s'",
+                    UtileSmart.getStringFromMap(paramMap, paramKey_orgNum));
+
+            selectResultStr = DBHelper.ExecuteSqlSelectOne(mamageSysAnalyze.getRSID(), sqlStr);
+            if (selectResultStr != null && Integer.parseInt(selectResultStr) != 0) {
+                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("该机构下存用户不能删除", param));
+            }
+
+            sqlStr = String.format("delete organization where orgNum ='%s'",
+                    UtileSmart.getStringFromMap(paramMap, paramKey_orgNum));
+            resultParam = DBHelper.ExecuteSql(mamageSysAnalyze.getRSID(), sqlStr);
+            if (resultParam.ResultCode >= 0) {
+                return formationResult.formationResult(ResponseResultCode.Success, resultParam);
+            } else {
+                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(resultParam.errMsg, param));
+            }
+        } catch (Exception e) {
+            return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(e.getLocalizedMessage(), param, e));
+        } finally {
+            paramMap.clear();
+            UtileSmart.FreeObjects(resultParam, param, sqlStr, paramMap);
+        }
+    }
+
+    @POST
+    @Path("InvalidDevice")
+    public String InvalidDevice(String param) {
+        String paramKey_id = "id";
+        ExecuteResultParam resultParam = null;
+        String sqlStr = null, selectResultStr = null;
+        Map<String, Object> paramMap = null;
+        try {
+            paramMap = new HashMap<String, Object>();
+
+            paramMap.put(paramKey_id, null);
+
+            mamageSysAnalyze.AnalyzeParamBodyToMap(param, paramMap);
+            //SELECT count(*) as orgUpNumCount FROM organization where orgUpNum='%s'
+
+            sqlStr = String.format("select deviceUser from device where id='%s'",
+                    UtileSmart.getStringFromMap(paramMap, paramKey_id));
+
+            selectResultStr = DBHelper.ExecuteSqlSelectOne(mamageSysAnalyze.getRSID(), sqlStr);
+            if (selectResultStr != null) {
+                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("该设备存在使用者请，不能删除。", param));
+                //new ExecuteResultParam("该问题已经处理，不能再进行操作", param)
+            }
+
+            sqlStr = String.format("update device set deviceValid='0' where id='%s'",
+                    UtileSmart.getStringFromMap(paramMap, paramKey_id));
+            resultParam = DBHelper.ExecuteSql(mamageSysAnalyze.getRSID(), sqlStr);
+            if (resultParam.ResultCode >= 0) {
+                return formationResult.formationResult(ResponseResultCode.Success, resultParam);
+            } else {
+                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(resultParam.errMsg, param));
+            }
+        } catch (Exception e) {
+            return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(e.getLocalizedMessage(), param, e));
+        } finally {
+            paramMap.clear();
+            UtileSmart.FreeObjects(resultParam, param, sqlStr, paramMap);
+        }
+    }
+
+    @POST
+    @Path("SelectAllOrg")
+    public String SelectAllOrg(String param) {
+        try {
+            //SELECT * FROM organization where orgLevel=1
+            mamageSysAnalyze.AnalyzeParamBodyToMap(param, null);
+            JSONObject jsonObj = new JSONObject();
+            jsonObj.accumulate(DeployInfo.ResultDataTag, SearchOrgRoot(mamageSysAnalyze.getRSID()));
+            return formationResult.formationResult(ResponseResultCode.Success, new ExecuteResultParam(jsonObj));
+        } catch (Exception ex) {
+            return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(ex.getLocalizedMessage(), param, ex));
+        }
+    }
+
+    private JSONArray SearchOrgRoot(String rsid) throws Exception {
+        try {
+            Map<String, Map<String, String>> map = DBHelper
+                    .ExecuteSqlSelectReturnMap(rsid, "SELECT o.orgName [text],o.id,o.orgLevel,o.orgNum,o.orgUpNum FROM organization o  where orgLevel='1'", "organization");
+            JSONArray jsonArray = new JSONArray();
+            for (Map<String, String> value : map.values()) {
+                JSONObject rootObj = JSONObject.fromObject(value);
+                SearchOrgDown(value.get("orgNum"), rsid, rootObj);
+                jsonArray.add(rootObj);
+            }
+            return jsonArray;
+        } catch (Exception ex) {
+            throw new Exception("SearchOrgRoot error" + ex.getLocalizedMessage());
+        }
+
+    }
+
+    private Map<String, Map<String, String>> SearchOrgDown(String upOrgNum, String rsid, JSONObject obj) throws Exception {
+        try {
+            Map<String, Map<String, String>> downMap = DBHelper
+                    .ExecuteSqlSelectReturnMap(rsid, String.format("SELECT o.orgName [text],o.id,o.orgLevel,o.orgNum,o.orgUpNum FROM organization o  where orgUpNum='%s'", upOrgNum), "organization");
+
+            if (downMap != null && downMap.size() > 0) {
+                for (Map<String, String> value : downMap.values()) {
+                    JSONArray downArray = new JSONArray();
+                    JSONObject downObj = JSONObject.fromObject(value);
+                    Map<String, Map<String, String>> downMap1 = SearchOrgDown(value.get("orgNum"), rsid, downObj);
+                    downArray.add(downObj);
+                    obj.accumulate("children", downArray);
+                }
+            }
+            return downMap;
+
+        } catch (Exception ex) {
+            common.RSLogger.ErrorLogInfo("SearchOrgDown error" + ex.getLocalizedMessage() + "upOrgNum:" + upOrgNum, ex);
+
+            throw new Exception("SearchOrgDown error" + ex.getLocalizedMessage() + "upOrgNum:" + upOrgNum);
+
+        }
+    }
+//
+//    public void SelectRootOrg(Map<String, Map<String, String>> map) {
+//        JSONArray jsonArray = new JSONArray();
+//        for (Map<String, String> value : map.values()) {
+//            if (value.get("orgLevel").equals("1")) {
+//                JSONObject obj = JSONObject.fromObject(value);
+//                findDownOrg(map, obj, value.get("orgUpNum"));
+//                jsonArray.add(obj);
+//            }
+//        }
+//    }
+//
+//    void findDownOrg(Map<String, Map<String, String>> map, JSONObject obj, String upOrgNum) {
+//        for (Map<String, String> value : map.values()) {
+//            if (value.get("").equals(upOrgNum)) {
+//                JSONObject objDown = new JSONObject();
+//
+//            }
+//        }
+//    }
+
+}

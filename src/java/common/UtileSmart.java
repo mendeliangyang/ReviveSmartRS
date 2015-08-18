@@ -7,7 +7,9 @@ package common;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 import net.sf.json.JSONObject;
 
 /**
@@ -24,6 +26,39 @@ public class UtileSmart {
         }
     }
 
+    public static Object getObjectFromMap(Map<String, Object> map, String key, boolean throwError) throws Exception {
+        if (map == null || key == null) {
+            throw new Exception("error on getObjectFromMap , paramateter is null.");
+        }
+        if (!map.containsKey(key)) {
+            if (throwError) {
+                throw new Exception("error on getObjectFromMap , map no containsKey :" + key);
+            }
+            return null;
+        }
+        Object value = map.get(key);
+        if (value == null && throwError) {
+            throw new Exception(String.format("error on getObjectFromMap, The inside of the map %s value is empty ", key));
+        }
+        return value;
+    }
+
+    public static String getStringFromMap(Map<String, Object> map, String key) throws Exception {
+        return getObjectFromMap(map, key, true).toString();
+    }
+
+    public static Object[] getListFromMap(Map<String, Object> map, String key) throws Exception {
+        return (Object[]) getObjectFromMap(map, key, true);
+    }
+
+    public static String tryGetStringFromMap(Map<String, Object> map, String key) throws Exception {
+        return getObjectFromMap(map, key, false).toString();
+    }
+
+    public static Object[] tryGetListFromMap(Map<String, Object> map, String key) throws Exception {
+        return (Object[]) getObjectFromMap(map, key, false);
+    }
+
     /**
      * *
      * 获取当前系统时间字符串 yyyyMMddHH
@@ -33,6 +68,10 @@ public class UtileSmart {
     public static String getCurrentDate() {
         SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHH");//设置日期格式
         return df.format(new Date());
+    }
+
+    public static String getUUID() {
+        return UUID.randomUUID().toString();
     }
 
     /**
@@ -105,7 +144,7 @@ public class UtileSmart {
         try {
             return GetJsonString(jsonObj, strParam, false);
         } catch (Exception ex) {
-            common.RSLogger.ErrorLogInfo(String.format("UtileSmart: GetJsonString error:%s", ex.getLocalizedMessage()),ex);
+            common.RSLogger.ErrorLogInfo(String.format("UtileSmart: GetJsonString error:%s", ex.getLocalizedMessage()), ex);
         }
         return null;
     }

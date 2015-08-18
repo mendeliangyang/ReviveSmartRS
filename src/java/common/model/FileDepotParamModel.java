@@ -19,10 +19,10 @@ public class FileDepotParamModel {
     public String rsid; //rsid
     public String ownid; //wonid
     public Set<DepotFileDetailModel> fileDetaile;  //文件信息 。文件名称，文件类型，文件操作是否覆盖
-    
-    public int selectFlag=0; //查询标记，0，无需构造查询语句无需参照改参数。 1表示按照 fileIds 查询，2表示安装fileTypes 查询
-    
-    public String toStringInformation(){
+
+    public int selectFlag = 0; //查询标记，0，无需构造查询语句无需参照改参数。 1表示按照 fileIds 查询，2表示安装fileTypes 查询
+
+    public String toStringInformation() {
         StringBuffer sb = new StringBuffer();
         sb.append("token:").append(this.token).append("$");
         sb.append("rsid:").append(this.rsid).append("$");
@@ -62,6 +62,10 @@ public class FileDepotParamModel {
         fileDetaile.add(new DepotFileDetailModel(pFileName, pFileOwnType, pFileOperate, pFileId));
     }
 
+    public void addFileDetail(DepotFileDetailModel detailModel) {
+        fileDetaile.add(detailModel);
+    }
+
     public DepotFileDetailModel getFileDetailModel(String pFileName) {
         for (DepotFileDetailModel fileDetaile1 : fileDetaile) {
             if (fileDetaile1.fileName.equals(pFileName)) {
@@ -76,7 +80,7 @@ public class FileDepotParamModel {
         ownid = null;
         fileDetaile = null;
         fileDetaile.clear();
-        fileDetaile=null;
+        fileDetaile = null;
     }
 
 }
