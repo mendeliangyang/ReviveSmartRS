@@ -893,7 +893,7 @@ public class DBHelper {
                     //todo 根据列的类型转换数据类型
                     //1获取操作的表
                     //2，根据字段名称转换
-                    row.accumulate(rsmd.getColumnName(j), result.getString(j));
+                    row.accumulate(rsmd.getColumnLabel(j), result.getString(j));
                 }
                 rows.add(row);
                 row = null;
