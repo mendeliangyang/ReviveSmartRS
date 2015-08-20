@@ -10,9 +10,15 @@ import common.DeployInfo;
 import common.FormationResult;
 import common.UtileSmart;
 import common.model.ExecuteResultParam;
+import common.model.OperateTypeEnum;
 import common.model.ResponseResultCode;
+import common.model.SignModel;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.POST;
@@ -27,7 +33,7 @@ import net.sf.json.JSONObject;
  */
 @Path("mamageSystem")
 public class MamageSystemResource {
-    
+
     MamageSystemAnalyzeParam mamageSysAnalyze = new MamageSystemAnalyzeParam();
     private final FormationResult formationResult = new FormationResult();
     @Context
@@ -38,7 +44,7 @@ public class MamageSystemResource {
      */
     public MamageSystemResource() {
     }
-    
+
     @POST
     @Path("DeleteOrg")
     public String DeleteOrg(String param) {
@@ -48,15 +54,15 @@ public class MamageSystemResource {
         Map<String, Object> paramMap = null;
         try {
             paramMap = new HashMap<String, Object>();
-            
+
             paramMap.put(paramKey_orgNum, null);
-            
+
             mamageSysAnalyze.AnalyzeParamBodyToMap(param, paramMap);
             //SELECT count(*) as orgUpNumCount FROM organization where orgUpNum='%s'
 
             sqlStr = String.format("SELECT count(*) as orgUpNumCount FROM organization where orgUpNum='%s'",
                     UtileSmart.getStringFromMap(paramMap, paramKey_orgNum));
-            
+
             selectResultStr = DBHelper.ExecuteSqlSelectOne(mamageSysAnalyze.getRSID(), sqlStr);
             if (selectResultStr == null) {
                 return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("该机构不存在", param));
@@ -66,19 +72,19 @@ public class MamageSystemResource {
             }
             sqlStr = String.format("SELECT count(*) as deviceCount FROM device where deviceOrgNo='%s'",
                     UtileSmart.getStringFromMap(paramMap, paramKey_orgNum));
-            
+
             selectResultStr = DBHelper.ExecuteSqlSelectOne(mamageSysAnalyze.getRSID(), sqlStr);
             if (selectResultStr != null && Integer.parseInt(selectResultStr) != 0) {
                 return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("该机构下存设备不能删除", param));
             }
             sqlStr = String.format("SELECT count(*) userCount FROM userInfo where userOrgNum ='%s'",
                     UtileSmart.getStringFromMap(paramMap, paramKey_orgNum));
-            
+
             selectResultStr = DBHelper.ExecuteSqlSelectOne(mamageSysAnalyze.getRSID(), sqlStr);
             if (selectResultStr != null && Integer.parseInt(selectResultStr) != 0) {
                 return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("该机构下存用户不能删除", param));
             }
-            
+
             sqlStr = String.format("delete organization where orgNum ='%s'",
                     UtileSmart.getStringFromMap(paramMap, paramKey_orgNum));
             resultParam = DBHelper.ExecuteSql(mamageSysAnalyze.getRSID(), sqlStr);
@@ -94,7 +100,7 @@ public class MamageSystemResource {
             UtileSmart.FreeObjects(resultParam, param, sqlStr, paramMap);
         }
     }
-    
+
     @POST
     @Path("InvalidDevice")
     public String InvalidDevice(String param) {
@@ -104,21 +110,21 @@ public class MamageSystemResource {
         Map<String, Object> paramMap = null;
         try {
             paramMap = new HashMap<String, Object>();
-            
+
             paramMap.put(paramKey_id, null);
-            
+
             mamageSysAnalyze.AnalyzeParamBodyToMap(param, paramMap);
             //SELECT count(*) as orgUpNumCount FROM organization where orgUpNum='%s'
 
             sqlStr = String.format("select deviceUser from device where id='%s'",
                     UtileSmart.getStringFromMap(paramMap, paramKey_id));
-            
+
             selectResultStr = DBHelper.ExecuteSqlSelectOne(mamageSysAnalyze.getRSID(), sqlStr);
             if (selectResultStr != null) {
                 return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("该设备存在使用者请，不能删除。", param));
                 //new ExecuteResultParam("该问题已经处理，不能再进行操作", param)
             }
-            
+
             sqlStr = String.format("update device set deviceValid='0' where id='%s'",
                     UtileSmart.getStringFromMap(paramMap, paramKey_id));
             resultParam = DBHelper.ExecuteSql(mamageSysAnalyze.getRSID(), sqlStr);
@@ -134,7 +140,44 @@ public class MamageSystemResource {
             UtileSmart.FreeObjects(resultParam, param, sqlStr, paramMap);
         }
     }
-    
+
+    @POST
+    @Path("SignInM")
+    public String SignInM(String param) {
+        String paramKey_userIdcd = "userIdcd";
+        String paramKey_userPwd = "userPwd";
+
+        ExecuteResultParam resultParam = null;
+        String sqlStr = null, selectResultStr = null;
+        Map<String, Object> paramMap = null;
+        try {
+            paramMap = new HashMap<String, Object>();
+
+            paramMap.put(paramKey_userIdcd, null);
+            paramMap.put(paramKey_userPwd, null);
+
+            mamageSysAnalyze.AnalyzeParamBodyToMap(param, paramMap);
+            //SELECT count(*) as orgUpNumCount FROM organization where orgUpNum='%s'
+
+            sqlStr = String.format("SELECT count(*) as userCount FROM dbo.userInfo where userIdcd='%s' and userPwd='%s'",
+                    UtileSmart.getStringFromMap(paramMap, paramKey_userIdcd), UtileSmart.getStringFromMap(paramMap, paramKey_userPwd));
+
+            selectResultStr = DBHelper.ExecuteSqlSelectOne(mamageSysAnalyze.getRSID(), sqlStr);
+            if (selectResultStr == null) {
+                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("输入用户名或密码错误。", param));
+            } else if (Integer.parseInt(selectResultStr) == 1) {
+                return formationResult.formationResult(ResponseResultCode.Success, new ExecuteResultParam("", param));
+            } else {
+                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("输入用户名或密码错误.", param));
+            }
+        } catch (Exception e) {
+            return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(e.getLocalizedMessage(), param, e));
+        } finally {
+            paramMap.clear();
+            UtileSmart.FreeObjects(resultParam, param, sqlStr, paramMap);
+        }
+    }
+
     @POST
     @Path("SelectAllOrg")
     public String SelectAllOrg(String param) {
@@ -153,7 +196,7 @@ public class MamageSystemResource {
             return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(ex.getLocalizedMessage(), param, ex));
         }
     }
-    
+
     private JSONArray SearchOrgRoot(String rsid) throws Exception {
         try {
             Map<String, Map<String, String>> map = DBHelper
@@ -168,14 +211,14 @@ public class MamageSystemResource {
         } catch (Exception ex) {
             throw new Exception("SearchOrgRoot error" + ex.getLocalizedMessage());
         }
-        
+
     }
-    
+
     private void SearchOrgDown(String upOrgNum, String rsid, JSONObject obj) throws Exception {
         try {
             Map<String, Map<String, String>> downMap = DBHelper
                     .ExecuteSqlSelectReturnMap(rsid, String.format("SELECT o.orgName [text],o.* FROM organization o  where orgUpNum='%s'", upOrgNum), "organization");
-            
+
             if (downMap != null && downMap.size() > 0) {
                 for (Map<String, String> value : downMap.values()) {
                     JSONArray downArray = new JSONArray();
@@ -185,12 +228,12 @@ public class MamageSystemResource {
                     obj.accumulate("children", downArray);
                 }
             }
-            
+
         } catch (Exception ex) {
             common.RSLogger.ErrorLogInfo("SearchOrgDown error" + ex.getLocalizedMessage() + "upOrgNum:" + upOrgNum, ex);
-            
+
             throw new Exception("SearchOrgDown error" + ex.getLocalizedMessage() + "upOrgNum:" + upOrgNum);
-            
+
         }
     }
 //
@@ -200,7 +243,10 @@ public class MamageSystemResource {
                 .ExecuteSqlSelectReturnMap(rsid, String.format("SELECT o.orgName [text], o.* FROM organization o "), "organization");
         JSONArray jsonArray = new JSONArray();
         for (Map<String, String> value : map.values()) {
-            if (value.get("orgLevel").equals("1")) {
+            if (value.get("orgNum") == null || value.get("orgUpNum") == null) {
+                continue;
+            }
+            if (value.get("orgNum").equals(value.get("orgUpNum"))) {
                 JSONObject obj = JSONObject.fromObject(value);
                 findDownOrg(map, obj, value.get("orgNum"));
                 jsonArray.add(obj);
@@ -208,18 +254,28 @@ public class MamageSystemResource {
         }
         return jsonArray;
     }
-//
 
+//
     void findDownOrg(Map<String, Map<String, String>> map, JSONObject obj, String upOrgNum) {
         for (Map<String, String> value : map.values()) {
-            if (value.get("orgUpNum").equals(upOrgNum)) {
-                JSONArray downArray = new JSONArray();
+            if (value.get("orgNum") == null || value.get("orgUpNum") == null) {
+                continue;
+            }
+            if (value.get("orgUpNum").equals(upOrgNum) && !value.get("orgNum").equals(value.get("orgUpNum"))) {
+                JSONArray downArray = null;
                 JSONObject objDown = JSONObject.fromObject(value);
                 findDownOrg(map, objDown, value.get("orgNum"));
+                if (obj.containsKey("children")) {
+                    downArray = obj.getJSONArray("children");
+                }
+                if (downArray == null) {
+                    downArray = new JSONArray();
+                }
                 downArray.add(objDown);
+                obj.remove("children");
                 obj.accumulate("children", downArray);
             }
         }
     }
-    
+
 }

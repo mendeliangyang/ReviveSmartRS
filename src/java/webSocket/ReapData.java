@@ -67,7 +67,6 @@ public class ReapData implements Runnable {
                         Iterator iteratorRows = rowsCountJson.iterator();
                         JSONObject rowsCount = (JSONObject) iteratorRows.next();
                         result.ResultJsonObject.accumulate("rowsCount", rowsCount.getString("rowsCount"));
-                        
                         //add pkvalues to result
                         result.ResultJsonObject.accumulate("pkValues",  msgFilterModel.varyData.pkValues_updates);
                     }
