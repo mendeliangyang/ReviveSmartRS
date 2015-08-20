@@ -10,21 +10,16 @@ import common.DeployInfo;
 import common.FormationResult;
 import common.UtileSmart;
 import common.model.ExecuteResultParam;
-import common.model.OperateTypeEnum;
 import common.model.ResponseResultCode;
-import common.model.SignModel;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import rsSvc.SignVerify.SignInformationModel;
 
 /**
  * REST Web Service
@@ -114,6 +109,11 @@ public class MamageSystemResource {
             paramMap.put(paramKey_id, null);
 
             mamageSysAnalyze.AnalyzeParamBodyToMap(param, paramMap);
+            // verify token
+            boolean isSignIn = rsSvc.SignVerify.SignCommon.verifySign(mamageSysAnalyze.getToken());
+            if (!isSignIn) {
+                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("回话无效，请您先登录系统。", param));
+            }
             //SELECT count(*) as orgUpNumCount FROM organization where orgUpNum='%s'
 
             sqlStr = String.format("select deviceUser from device where id='%s'",
@@ -148,8 +148,9 @@ public class MamageSystemResource {
         String paramKey_userPwd = "userPwd";
 
         ExecuteResultParam resultParam = null;
-        String sqlStr = null, selectResultStr = null;
+        String sqlStr = null;
         Map<String, Object> paramMap = null;
+        Map<String, Map<String, String>> resultMap = null;
         try {
             paramMap = new HashMap<String, Object>();
 
@@ -157,16 +158,15 @@ public class MamageSystemResource {
             paramMap.put(paramKey_userPwd, null);
 
             mamageSysAnalyze.AnalyzeParamBodyToMap(param, paramMap);
-            //SELECT count(*) as orgUpNumCount FROM organization where orgUpNum='%s'
 
-            sqlStr = String.format("SELECT count(*) as userCount FROM dbo.userInfo where userIdcd='%s' and userPwd='%s'",
+            //SELECT count(*) as orgUpNumCount FROM organization where orgUpNum='%s'
+            sqlStr = String.format("SELECT u.id,u.userAddress,u.userEmail,u.userIdcd,u.userMobilePhone,u.userName,u.userNum,u.userOrgNum,o.orgName as orgName,o.orgLevel,u.userRole,u.userSex,u.userTelephone ,r.pow_id,r.name as rouleName ,p.name powerName,p.id as powerId FROM userInfo u left join organization o on u.userOrgNum=o.orgNum  left join roleInfo r on u.userRole=r.id left join power p on r.pow_id=p.id where u.userIdcd='%s' and u.userPwd='%s'",
                     UtileSmart.getStringFromMap(paramMap, paramKey_userIdcd), UtileSmart.getStringFromMap(paramMap, paramKey_userPwd));
 
-            selectResultStr = DBHelper.ExecuteSqlSelectOne(mamageSysAnalyze.getRSID(), sqlStr);
-            if (selectResultStr == null) {
-                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("输入用户名或密码错误。", param));
-            } else if (Integer.parseInt(selectResultStr) == 1) {
-                return formationResult.formationResult(ResponseResultCode.Success, new ExecuteResultParam("", param));
+            resultMap = DBHelper.ExecuteSqlSelectReturnMap(mamageSysAnalyze.getRSID(), sqlStr, "userInfo");
+            if (resultMap != null && resultMap.size() == 1) {
+                SignInformationModel signModel = rsSvc.SignVerify.SignCommon.SignIn(resultMap.keySet().iterator().next(), null, null);
+                return formationResult.formationResult(ResponseResultCode.Success, signModel.token, new ExecuteResultParam(resultMap, false));
             } else {
                 return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("输入用户名或密码错误.", param));
             }
@@ -175,6 +175,19 @@ public class MamageSystemResource {
         } finally {
             paramMap.clear();
             UtileSmart.FreeObjects(resultParam, param, sqlStr, paramMap);
+        }
+    }
+
+    @POST
+    @Path("SignOutM")
+    public String SignOutM(String param) {
+        try {
+
+            rsSvc.SignVerify.SignCommon.SignOut("");
+            return formationResult.formationResult(ResponseResultCode.Success);
+        } catch (Exception e) {
+            return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(e.getLocalizedMessage(), param, e));
+        } finally {
         }
     }
 
@@ -231,9 +244,7 @@ public class MamageSystemResource {
 
         } catch (Exception ex) {
             common.RSLogger.ErrorLogInfo("SearchOrgDown error" + ex.getLocalizedMessage() + "upOrgNum:" + upOrgNum, ex);
-
             throw new Exception("SearchOrgDown error" + ex.getLocalizedMessage() + "upOrgNum:" + upOrgNum);
-
         }
     }
 //
@@ -255,7 +266,6 @@ public class MamageSystemResource {
         return jsonArray;
     }
 
-//
     void findDownOrg(Map<String, Map<String, String>> map, JSONObject obj, String upOrgNum) {
         for (Map<String, String> value : map.values()) {
             if (value.get("orgNum") == null || value.get("orgUpNum") == null) {

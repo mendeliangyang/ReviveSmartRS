@@ -13,4 +13,5 @@ public class MamageSystemAnalyzeParam extends common.base.commonAnalyzeParam {
     public MamageSystemAnalyzeParam() {
         super.setRSID("mamageSystem");
     }
+    
 }

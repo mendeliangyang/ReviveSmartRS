@@ -16,22 +16,30 @@ import net.sf.json.JSONObject;
 public class FormationResult {
 
     /**
-     * 
+     *
      * @param resultCode
      * @param resultParam
-     * @return 
+     * @return
      */
     public String formationResult(ResponseResultCode resultCode, ExecuteResultParam resultParam) {
         return this.formationResult(resultCode, null, null, resultParam);
     }
-
     /**
      * 
+     * @param resultCode
+     * @return 
+     */
+    public String formationResult(ResponseResultCode resultCode) {
+        return this.formationResult(resultCode, null, null, new ExecuteResultParam());
+    }
+
+    /**
+     *
      * @param resultCode
      * @param token
      * @param pushId
      * @param resultParam
-     * @return 
+     * @return
      */
     public String formationResult(ResponseResultCode resultCode, String token, String pushId, ExecuteResultParam resultParam) {
 
@@ -46,7 +54,7 @@ public class FormationResult {
         if (null != pushId) {
             resultHeadContext.accumulate("pushId", pushId);
         }
-        
+
         resultJson.accumulate("head", resultHeadContext);
         resultJson.accumulate("body", resultParam.ResultJsonObject);
         // if error,log information
@@ -57,11 +65,11 @@ public class FormationResult {
     }
 
     /**
-     * 
+     *
      * @param resultCode
      * @param token
      * @param resultParam
-     * @return 
+     * @return
      */
     public String formationResult(ResponseResultCode resultCode, String token, ExecuteResultParam resultParam) {
         return this.formationResult(resultCode, token, null, resultParam);
