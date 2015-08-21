@@ -53,7 +53,8 @@ public class MamageSystemResource {
             paramMap.put(paramKey_orgNum, null);
 
             mamageSysAnalyze.AnalyzeParamBodyToMap(param, paramMap);
-            //SELECT count(*) as orgUpNumCount FROM organization where orgUpNum='%s'
+            // verify token
+            rsSvc.SignVerify.SignCommon.verifySign(mamageSysAnalyze.getToken(), true);
 
             sqlStr = String.format("SELECT count(*) as orgUpNumCount FROM organization where orgUpNum='%s'",
                     UtileSmart.getStringFromMap(paramMap, paramKey_orgNum));
@@ -110,12 +111,9 @@ public class MamageSystemResource {
 
             mamageSysAnalyze.AnalyzeParamBodyToMap(param, paramMap);
             // verify token
-            boolean isSignIn = rsSvc.SignVerify.SignCommon.verifySign(mamageSysAnalyze.getToken());
-            if (!isSignIn) {
-                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("回话无效，请您先登录系统。", param));
-            }
-            //SELECT count(*) as orgUpNumCount FROM organization where orgUpNum='%s'
+            rsSvc.SignVerify.SignCommon.verifySign(mamageSysAnalyze.getToken(), true);
 
+            //SELECT count(*) as orgUpNumCount FROM organization where orgUpNum='%s'
             sqlStr = String.format("select deviceUser from device where id='%s'",
                     UtileSmart.getStringFromMap(paramMap, paramKey_id));
 
@@ -174,6 +172,7 @@ public class MamageSystemResource {
             return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(e.getLocalizedMessage(), param, e));
         } finally {
             paramMap.clear();
+            UtileSmart.cleanMapTDString(resultMap);
             UtileSmart.FreeObjects(resultParam, param, sqlStr, paramMap);
         }
     }
@@ -198,6 +197,8 @@ public class MamageSystemResource {
             JSONArray jsonArray = null;
             //SELECT * FROM organization where orgLevel=1
             mamageSysAnalyze.AnalyzeParamBodyToMap(param, null);
+            // verify token
+            rsSvc.SignVerify.SignCommon.verifySign(mamageSysAnalyze.getToken(), true);
             //分级递归查询
             //jsonArray = SearchOrgRoot(mamageSysAnalyze.getRSID());
             //一次性查询，本地递归组装数据
@@ -211,8 +212,9 @@ public class MamageSystemResource {
     }
 
     private JSONArray SearchOrgRoot(String rsid) throws Exception {
+        Map<String, Map<String, String>> map = null;
         try {
-            Map<String, Map<String, String>> map = DBHelper
+            map = DBHelper
                     .ExecuteSqlSelectReturnMap(rsid, "SELECT o.orgName [text],o.* FROM organization o  where orgLevel='1'", "organization");
             JSONArray jsonArray = new JSONArray();
             for (Map<String, String> value : map.values()) {
@@ -223,13 +225,16 @@ public class MamageSystemResource {
             return jsonArray;
         } catch (Exception ex) {
             throw new Exception("SearchOrgRoot error" + ex.getLocalizedMessage());
+        } finally {
+            UtileSmart.cleanMapTDString(map);
         }
 
     }
 
     private void SearchOrgDown(String upOrgNum, String rsid, JSONObject obj) throws Exception {
+        Map<String, Map<String, String>> downMap = null;
         try {
-            Map<String, Map<String, String>> downMap = DBHelper
+            downMap = DBHelper
                     .ExecuteSqlSelectReturnMap(rsid, String.format("SELECT o.orgName [text],o.* FROM organization o  where orgUpNum='%s'", upOrgNum), "organization");
 
             if (downMap != null && downMap.size() > 0) {
@@ -245,25 +250,34 @@ public class MamageSystemResource {
         } catch (Exception ex) {
             common.RSLogger.ErrorLogInfo("SearchOrgDown error" + ex.getLocalizedMessage() + "upOrgNum:" + upOrgNum, ex);
             throw new Exception("SearchOrgDown error" + ex.getLocalizedMessage() + "upOrgNum:" + upOrgNum);
+        } finally {
+
+            UtileSmart.cleanMapTDString(downMap);
         }
     }
 //
 
     public JSONArray SelectRootOrg(String rsid) throws Exception {
-        Map<String, Map<String, String>> map = DBHelper
-                .ExecuteSqlSelectReturnMap(rsid, String.format("SELECT o.orgName [text], o.* FROM organization o "), "organization");
-        JSONArray jsonArray = new JSONArray();
-        for (Map<String, String> value : map.values()) {
-            if (value.get("orgNum") == null || value.get("orgUpNum") == null) {
-                continue;
+        Map<String, Map<String, String>> map = null;
+        try {
+            map = DBHelper
+                    .ExecuteSqlSelectReturnMap(rsid, String.format("SELECT o.orgName [text], o.* FROM organization o "), "organization");
+            JSONArray jsonArray = new JSONArray();
+            for (Map<String, String> value : map.values()) {
+                if (value.get("orgNum") == null || value.get("orgUpNum") == null) {
+                    continue;
+                }
+                if (value.get("orgNum").equals(value.get("orgUpNum"))) {
+                    JSONObject obj = JSONObject.fromObject(value);
+                    findDownOrg(map, obj, value.get("orgNum"));
+                    jsonArray.add(obj);
+                }
             }
-            if (value.get("orgNum").equals(value.get("orgUpNum"))) {
-                JSONObject obj = JSONObject.fromObject(value);
-                findDownOrg(map, obj, value.get("orgNum"));
-                jsonArray.add(obj);
-            }
+            return jsonArray;
+        } finally {
+            UtileSmart.cleanMapTDString(map);
         }
-        return jsonArray;
+
     }
 
     void findDownOrg(Map<String, Map<String, String>> map, JSONObject obj, String upOrgNum) {

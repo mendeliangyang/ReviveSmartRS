@@ -79,9 +79,9 @@ public class ReviveRS {
         return "only test "; //NetHelper.test();
     }
 
-    @POST
-    @Path("UpLoadFile")
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
+//    @POST
+//    @Path("UpLoadFile")
+//    @Consumes(MediaType.MULTIPART_FORM_DATA)
     public String UpLoadFile(
             @FormDataParam("file") InputStream fileInputStream,
             @FormDataParam("file") FormDataContentDisposition fileDisposition, @FormDataParam("param") String paramStr) {
@@ -161,8 +161,8 @@ public class ReviveRS {
 
     }
 
-    @POST
-    @Path("UpBase64File")
+//    @POST
+//    @Path("UpBase64File")
     public String UpBase64File(String param) {
         try {
             //加载json
@@ -202,7 +202,6 @@ public class ReviveRS {
         }
 
     }
-
 
     /**
      *
@@ -289,10 +288,11 @@ public class ReviveRS {
         try {
             paramModel = analyzeParamModel.transferReviveRSParamModel(param, OperateTypeEnum.select);
 
-            boolean isSignOn = common.VerificationSign.verificationSignOn(paramModel.token, paramModel.rsid);
-            if (!isSignOn) {
-                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("请您先登录系统。", param));
-            }
+//            boolean isSignOn = common.VerificationSign.verificationSignOn(paramModel.token, paramModel.rsid);
+//            if (!isSignOn) {
+//                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("请您先登录系统。", param));
+//            }
+            rsSvc.SignVerify.SignCommon.verifySign(paramModel.token, true);
 
             //判断是否有分页
             if ((paramModel.db_pageNum != -1 && paramModel.db_pageSize != -1) || (paramModel.db_skipNum != -1 && paramModel.db_topNum != -1)) {
@@ -337,10 +337,11 @@ public class ReviveRS {
         try {
             paramModel = analyzeParamModel.transferReviveRSParamModel(param, OperateTypeEnum.select);
 
-            boolean isSignOn = common.VerificationSign.verificationSignOn(paramModel.token, paramModel.rsid);
-            if (!isSignOn) {
-                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("请您先登录系统。", param));
-            }
+//            boolean isSignOn = common.VerificationSign.verificationSignOn(paramModel.token, paramModel.rsid);
+//            if (!isSignOn) {
+//                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("请您先登录系统。", param));
+//            }
+            rsSvc.SignVerify.SignCommon.verifySign(paramModel.token, true);
 
             sqlStr = DBHelper.SqlSelectCountFactory(paramModel);
             //执行sql查询
@@ -368,10 +369,11 @@ public class ReviveRS {
         try {
             paramModel = analyzeParamModel.transferReviveRSParamModel(param, OperateTypeEnum.update);
 
-            boolean isSignOn = common.VerificationSign.verificationSignOn(paramModel.token, paramModel.rsid);
-            if (!isSignOn) {
-                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("请您先登录系统。", param));
-            }
+//            boolean isSignOn = common.VerificationSign.verificationSignOn(paramModel.token, paramModel.rsid);
+//            if (!isSignOn) {
+//                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("请您先登录系统。", param));
+//            }
+            rsSvc.SignVerify.SignCommon.verifySign(paramModel.token, true);
 
             resultParam = DBHelper.ExecuteSql(paramModel.rsid, DBHelper.SqlUpdateFactory(paramModel));
 
@@ -400,10 +402,12 @@ public class ReviveRS {
         try {
             paramModel = analyzeParamModel.transferReviveRSParamModel(param, OperateTypeEnum.delete);
 
-            boolean isSignOn = common.VerificationSign.verificationSignOn(paramModel.token, paramModel.rsid);
-            if (!isSignOn) {
-                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("请您先登录系统。", param));
-            }
+//            boolean isSignOn = common.VerificationSign.verificationSignOn(paramModel.token, paramModel.rsid);
+//            if (!isSignOn) {
+//                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("请您先登录系统。", param));
+//            }
+            rsSvc.SignVerify.SignCommon.verifySign(paramModel.token, true);
+
             resultParam = DBHelper.ExecuteSql(paramModel.rsid, DBHelper.SqlDeleteFactory(paramModel));
             if (resultParam.ResultCode >= 0) {
                 return formationResult.formationResult(ResponseResultCode.Success, new ExecuteResultParam());
@@ -429,10 +433,12 @@ public class ReviveRS {
         try {
             paramModel = analyzeParamModel.transferReviveRSParamModel(param, OperateTypeEnum.insert);
 
-            boolean isSignOn = common.VerificationSign.verificationSignOn(paramModel.token, paramModel.rsid);
-            if (!isSignOn) {
-                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("请您先登录系统。", param));
-            }
+//            boolean isSignOn = common.VerificationSign.verificationSignOn(paramModel.token, paramModel.rsid);
+//            if (!isSignOn) {
+//                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("请您先登录系统。", param));
+//            }
+            rsSvc.SignVerify.SignCommon.verifySign(paramModel.token, true);
+
             sqlResultModel = DBHelper.SqlInsertFactory(paramModel);
             //如果有identity 开始的sql语句以 SET NOCOUNT  ON 开始 执行查询方法
             if (sqlResultModel.strSql.startsWith("SET NOCOUNT ON")) {
@@ -468,8 +474,8 @@ public class ReviveRS {
         }
     }
 
-    @POST
-    @Path("SetUpTableInfo")
+//    @POST
+//    @Path("SetUpTableInfo")
     public String SetUpTableInfo(String param) {
         ExecuteResultParam resultParam = null;
         try {

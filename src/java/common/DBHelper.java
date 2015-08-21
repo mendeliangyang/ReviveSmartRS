@@ -186,7 +186,7 @@ public class DBHelper {
         }
     }
 
-     /**
+    /**
      * 根据传入数据生成插入语句
      *
      *
@@ -913,6 +913,15 @@ public class DBHelper {
         return new ExecuteResultParam(0, "", table);
     }
 
+    /**
+     * 使用完成后，注意清理 map，避免内存泄漏 cleanMapTDString
+     *
+     * @param rsid
+     * @param sqlStr
+     * @param TableName
+     * @return
+     * @throws Exception
+     */
     public static Map<String, Map<String, String>> ExecuteSqlSelectReturnMap(String rsid, String sqlStr, String TableName) throws Exception {
         Connection conn = null;
         Statement stmt = null;
@@ -1149,55 +1158,23 @@ public class DBHelper {
     @Deprecated
     public static ExecuteResultParam GetTableInfosByDataBase(String rsid) {
         //TODO 如果需要使用该方法，请重新测试，因为获取表结构的方式有所改动
-        // RSLogger.LogInfo("GetTableInfos : " + rsid);
+
         Connection conn = null;
         Statement stmt = null;
         ResultSet result = null;
-        Set<TableInfoModel> tableInfos = new HashSet<>();
-        //Set<TableDetailModel> tableDetails = new HashSet<>();
         Set<String> insertSqls = new HashSet<>();
         //获取数据库连接
         try {
-            String sqlForTableName = "select ob.* from sysobjects ob where ob.type='U' ";
-            String sqlInsertTableInfo = null;
-            StringBuffer sqlTableDetailWhere = new StringBuffer();
+            DBDetailModel dbDetailModel = GetRSIDModel(rsid);
+            for (TableInfoModel dbTableInfo : dbDetailModel.dbTableInfos) {
+                for (TableDetailModel tableDetail : dbTableInfo.tableDetails) {
+                    insertSqls.add(String.format("insert into tableinfo1(tableid,name,type,length)values(%s,'%s','%s',%s)",
+                            tableDetail.tbId, tableDetail.name, tableDetail.dataType.toString(), tableDetail.dataLength));
+                }
+            }
+
             conn = DBHelper.ConnectSybase(rsid);
             stmt = conn.createStatement();
-            result = stmt.executeQuery(sqlForTableName);
-            //ResultSetMetaData rsmd = result.getMetaData();
-            //int columnCount = rsmd.getColumnCount();
-            TableInfoModel tempTableInfo = null;
-            while (result.next()) {
-                tempTableInfo = new TableInfoModel();
-                tempTableInfo.tbName = result.getString("name");
-                sqlTableDetailWhere.append("'");
-                sqlTableDetailWhere.append(tempTableInfo.tbName);
-                sqlTableDetailWhere.append("',");
-                tempTableInfo.tbId = result.getString("id");
-                // row.accumulate(rsmd.getColumnName(j), result.getString(j));
-                tableInfos.add(tempTableInfo);
-                //添加到需要执行的sql语句中
-                insertSqls.add("insert into alltable1 (id,name) values(" + tempTableInfo.tbId + ",'" + tempTableInfo.tbName + "')");
-            }
-            result.close();
-            sqlForTableName = String.format("SELECT sc.* FROM syscolumns sc INNER JOIN sysobjects so ON sc.id = so.id WHERE so.name in (%s) order by sc.id ", sqlTableDetailWhere.subSequence(0, sqlTableDetailWhere.lastIndexOf(",")));
-
-            ResultSet result1 = stmt.executeQuery(sqlForTableName);
-            TableDetailModel tempTabelDetail = null;
-            while (result1.next()) {
-                tempTabelDetail = new TableDetailModel();
-                tempTabelDetail.name = result1.getString("name");
-                tempTabelDetail.tbId = result1.getString("id");
-                tempTabelDetail.dataLength = result1.getString("length");
-                tempTabelDetail.type = result1.getString("type");
-                tempTabelDetail.strDataType = result1.getString("dataTypeName");
-                tempTabelDetail.dataType = GetColumnType(tempTabelDetail.strDataType);
-                tempTabelDetail.status = result1.getString("status");
-                insertSqls.add(String.format("insert into tableinfo1(tableid,name,type,length)values(%s,'%s','%s',%s)", tempTabelDetail.tbId, tempTabelDetail.name, tempTabelDetail.dataType.toString(), tempTabelDetail.dataLength));
-                TableInfoModel temptableInfo = GetTabelInfoByLocal(tableInfos, tempTabelDetail.tbId);
-                temptableInfo.tableDetails.add(tempTabelDetail);
-            }
-            result1.close();
             int iRet;
             for (String insertSql : insertSqls) {
                 iRet = stmt.executeUpdate(insertSql);
@@ -1206,7 +1183,7 @@ public class DBHelper {
                 }
             }
             return new ExecuteResultParam(0, "success");
-            //查询用户表中的column信息
+
         } catch (Exception e) {
             RSLogger.ErrorLogInfo(e.getLocalizedMessage());
             return new ExecuteResultParam(-1, e.getLocalizedMessage());
