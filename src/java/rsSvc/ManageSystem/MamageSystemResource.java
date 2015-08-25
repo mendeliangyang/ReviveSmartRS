@@ -140,6 +140,49 @@ public class MamageSystemResource {
     }
 
     @POST
+    @Path("SignInMM")
+    public String SignInMM(String param) {
+        String paramKey_userIdcd = "userIdcd";
+        String paramKey_userPwd = "userPwd";
+        String paramKey_deviceMac = "deviceMac";
+
+        ExecuteResultParam resultParam = null;
+        String sqlStr = null;
+        Map<String, Object> paramMap = null;
+        Map<String, Map<String, String>> resultMap = null;
+        try {
+            paramMap = new HashMap<String, Object>();
+
+            paramMap.put(paramKey_userIdcd, null);
+            paramMap.put(paramKey_userPwd, null);
+            paramMap.put(paramKey_deviceMac, null);
+
+            mamageSysAnalyze.AnalyzeParamBodyToMap(param, paramMap);
+
+            //SELECT count(*) as orgUpNumCount FROM organization where orgUpNum='%s'
+            sqlStr = String.format("SELECT u.id,u.userAddress,u.userEmail,u.userIdcd,u.userMobilePhone,u.userName,u.userNum,u.userOrgNum,o.orgName as orgName,"
+                    + "o.orgLevel,u.userRole,u.userSex,u.userTelephone ,r.pow_id,r.name as rouleName ,p.name powerName,p.id as powerId FROM userInfo u "
+                    + "left join organization o on u.userOrgNum=o.orgNum  left join roleInfo r on u.userRole=r.id left join power p on r.pow_id=p.id "
+                    + "where u.userIdcd='%s' and u.userPwd='%s' and u.id=(select d.deviceUser from device d where d.deviceMac='%s')",
+                    UtileSmart.getStringFromMap(paramMap, paramKey_userIdcd), UtileSmart.getStringFromMap(paramMap, paramKey_userPwd), UtileSmart.getStringFromMap(paramMap, paramKey_deviceMac));
+
+            resultMap = DBHelper.ExecuteSqlSelectReturnMap(mamageSysAnalyze.getRSID(), sqlStr, "userInfo");
+            if (resultMap != null && resultMap.size() == 1) {
+                SignInformationModel signModel = rsSvc.SignVerify.SignCommon.SignIn(resultMap.keySet().iterator().next(), null, null);
+                return formationResult.formationResult(ResponseResultCode.Success, signModel.token, new ExecuteResultParam(resultMap, false));
+            } else {
+                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("输入用户名或密码错误或设备mac值不匹配.", param));
+            }
+        } catch (Exception e) {
+            return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(e.getLocalizedMessage(), param, e));
+        } finally {
+            paramMap.clear();
+            UtileSmart.cleanMapTDString(resultMap);
+            UtileSmart.FreeObjects(resultParam, param, sqlStr, paramMap);
+        }
+    }
+
+    @POST
     @Path("SignInM")
     public String SignInM(String param) {
         String paramKey_userIdcd = "userIdcd";
@@ -181,7 +224,6 @@ public class MamageSystemResource {
     @Path("SignOutM")
     public String SignOutM(String param) {
         try {
-
             rsSvc.SignVerify.SignCommon.SignOut("");
             return formationResult.formationResult(ResponseResultCode.Success);
         } catch (Exception e) {

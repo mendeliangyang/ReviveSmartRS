@@ -5,6 +5,14 @@
  */
 package common;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.security.MessageDigest;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Iterator;
@@ -25,6 +33,78 @@ public class UtileSmart {
                 obj = null;
             }
         }
+    }
+
+    public static String string2MD5(String inStr) {
+        MessageDigest md5 = null;
+        try {
+            md5 = MessageDigest.getInstance("MD5");
+        } catch (Exception e) {
+            RSLogger.ErrorLogInfo("string2MD5 error"+e.getLocalizedMessage(), e);
+            return "";
+        }
+        char[] charArray = inStr.toCharArray();
+        byte[] byteArray = new byte[charArray.length];
+
+        for (int i = 0; i < charArray.length; i++) {
+            byteArray[i] = (byte) charArray[i];
+        }
+        byte[] md5Bytes = md5.digest(byteArray);
+        StringBuffer hexValue = new StringBuffer();
+        for (int i = 0; i < md5Bytes.length; i++) {
+            int val = ((int) md5Bytes[i]) & 0xff;
+            if (val < 16) {
+                hexValue.append("0");
+            }
+            hexValue.append(Integer.toHexString(val));
+        }
+        return hexValue.toString();
+
+    }
+
+    public static String readFile(String path, String encoding) throws Exception {
+        StringBuffer sb = new StringBuffer();
+        String tempString = null;
+        File file = null;
+        BufferedReader reader = null;
+        try {
+
+            reader = new BufferedReader(new InputStreamReader(new FileInputStream(new File(path)), encoding));
+            while ((tempString = reader.readLine()) != null) {
+                sb.append(tempString);
+            }
+            reader.close();
+            return sb.toString();
+        } catch (IOException e) {
+            common.RSLogger.ErrorLogInfo("read file error." + e.getLocalizedMessage(), e);
+            throw new Exception("read file error." + e.getLocalizedMessage());
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException el) {
+                    common.RSLogger.ErrorLogInfo("read file error, close reader.", el);
+                } finally {
+                    common.UtileSmart.FreeObjects(sb, tempString, file, reader);
+                }
+            }
+        }
+    }
+
+    public static void writeFile(String path, String strContext, String decoding) throws Exception {
+        FileOutputStream out = null;
+        try {
+            out = new FileOutputStream(new File(path));
+            out.write(strContext.getBytes());
+            out.close();
+        } catch (FileNotFoundException ex) {
+            common.RSLogger.ErrorLogInfo("write file error file not found." + ex.getLocalizedMessage(), ex);
+            throw new Exception("write file error file not found." + ex.getLocalizedMessage());
+        } catch (IOException ex) {
+            common.RSLogger.ErrorLogInfo("write file error" + ex.getLocalizedMessage(), ex);
+            throw new Exception("write file error." + ex.getLocalizedMessage());
+        }
+
     }
 
     public static Object getObjectFromMap(Map<String, Object> map, String key, boolean throwError) throws Exception {
@@ -67,8 +147,10 @@ public class UtileSmart {
         Iterator iterator = mapOrigin.values().iterator();
         while (iterator.hasNext()) {
             Map<String, String> next = (Map<String, String>) iterator.next();
-            mapOrigin.values().remove(next);
-            next.clear();
+            iterator.remove();
+            if (next != null) {
+                next.clear();
+            }
         }
         mapOrigin.clear();
     }

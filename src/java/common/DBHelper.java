@@ -224,6 +224,10 @@ public class DBHelper {
                 String key = (String) keys.next();
                 tempColumn.append(key).append(" ,");
                 tempTableColumnDetail = pTableInfo.getColumnDetail(key);
+                if (tempTableColumnDetail == null) {
+                    throw new Exception("error: column detail Unknown ." + key);
+                }
+
                 if (paramModel.db_valueColumns.get(key).equals("db_defaultV")) {
                     tempValue.append(" ").append("default").append(" ,");
                 } else if (tempTableColumnDetail.dataType == DataBaseTypeEnum.number || tempTableColumnDetail.dataType == DataBaseTypeEnum.decimal) {
