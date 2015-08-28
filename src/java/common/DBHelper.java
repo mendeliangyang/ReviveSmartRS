@@ -1092,7 +1092,7 @@ public class DBHelper {
                                     if (value.equals("") || value.equals(" ") || value.toLowerCase().equals("null")) {
                                         continue;
                                     }
-                                    value = DeployInfo.GetDeployHttpFilePath() + value;
+                                    value = DeployInfo.GetDeployHttpFilePath() + value.replace("\\", "/");
                                     tempColumnValue.append(value);
                                     //tempColumnValue = tempColumnValue + value;
                                 }

@@ -106,7 +106,7 @@
         <dbpwd>123456</dbpwd>
     </systemSet>-->
     <httpPath>http://220.231.153.66:80/ReviveSmartRS/</httpPath>
-    <httpAddress>220.231.153.66</httpAddress>
-    <httpPort>80</httpPort>
+    <httpAddress>192.168.169.217</httpAddress>
+    <httpPort>8007</httpPort>
     <httpTimeOut>30</httpTimeOut>
 </deploy>
