@@ -142,8 +142,8 @@ public class MamageSystemResource {
     @POST
     @Path("SignInMM")
     public String SignInMM(String param) {
-        String paramKey_userIdcd = "userIdcd";
-        String paramKey_userPwd = "userPwd";
+        String paramKey_userIdcd = "tellerIdcd";
+        String paramKey_userPwd = "tellerPwd";
         String paramKey_deviceMac = "deviceMac";
 
         ExecuteResultParam resultParam = null;
@@ -160,14 +160,21 @@ public class MamageSystemResource {
             mamageSysAnalyze.AnalyzeParamBodyToMap(param, paramMap);
 
             //SELECT count(*) as orgUpNumCount FROM organization where orgUpNum='%s'
-            sqlStr = String.format("SELECT u.id,u.userAddress,u.userEmail,u.userIdcd,u.userMobilePhone,u.userName,u.userNum,u.userOrgNum,o.orgName as orgName,"
-                    + "o.orgLevel,u.userRole,u.userSex,u.userTelephone ,r.pow_id,r.name as rouleName ,p.name powerName,p.id as powerId FROM userInfo u "
-                    + "left join organization o on u.userOrgNum=o.orgNum  left join roleInfo r on u.userRole=r.id left join power p on r.pow_id=p.id "
-                    + "left join device d on  d.deviceMac='%s' where u.userIdcd='%s' and u.userPwd='%s' and u.id=(select d.deviceUser from device d where d.deviceMac='%s')",
-                    UtileSmart.getStringFromMap(paramMap, paramKey_userIdcd), UtileSmart.getStringFromMap(paramMap, paramKey_userPwd), UtileSmart.getStringFromMap(paramMap, paramKey_deviceMac));
+            sqlStr = String.format("SELECT t.*,o.orgName ,o.orgLevel,o.orgUpNum ,d.deviceMac,d.deviceOrgNo FROM teller t left join organization o on t.tellerOrgNo=o.orgNum "
+                    + "left join device d on d.deviceUser=t.id where t.tellerIdcd='%s' and t.tellerPwd='%s'",
+                    UtileSmart.getStringFromMap(paramMap, paramKey_userIdcd), UtileSmart.getStringFromMap(paramMap, paramKey_userPwd));
 
-            resultMap = DBHelper.ExecuteSqlSelectReturnMap(mamageSysAnalyze.getRSID(), sqlStr, "userInfo");
+            resultMap = DBHelper.ExecuteSqlSelectReturnMap(mamageSysAnalyze.getRSID(), sqlStr, "teller");
             if (resultMap != null && resultMap.size() == 1) {
+
+                //, UtileSmart.getStringFromMap(paramMap, paramKey_deviceMac)
+                for (Map.Entry<String, Map<String, String>> entrySet : resultMap.entrySet()) {
+                    Map<String, String> value = entrySet.getValue();
+                    if (!UtileSmart.getStringFromMap(paramMap, paramKey_deviceMac).equals(value.get("deviceMac"))) {
+                        return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("输入用户名或密码错误或设备mac值不匹配.", param));
+                    }
+                }
+
                 SignInformationModel signModel = rsSvc.SignVerify.SignCommon.SignIn(resultMap.keySet().iterator().next(), null, null);
                 return formationResult.formationResult(ResponseResultCode.Success, signModel.token, new ExecuteResultParam(resultMap, false));
             } else {
