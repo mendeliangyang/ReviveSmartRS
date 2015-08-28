@@ -124,8 +124,10 @@ public class SignCommon {
             //验证通过
             return tempEvm;
         } finally {
-            synchronized (SignRecords) {
-                tempEvm.signDateTime = new Date().getTime();
+            if (tempEvm != null) {
+                synchronized (SignRecords) {
+                    tempEvm.signDateTime = new Date().getTime();
+                }
             }
         }
 
