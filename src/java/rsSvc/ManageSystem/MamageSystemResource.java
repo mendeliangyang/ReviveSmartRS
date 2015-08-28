@@ -163,7 +163,7 @@ public class MamageSystemResource {
             sqlStr = String.format("SELECT u.id,u.userAddress,u.userEmail,u.userIdcd,u.userMobilePhone,u.userName,u.userNum,u.userOrgNum,o.orgName as orgName,"
                     + "o.orgLevel,u.userRole,u.userSex,u.userTelephone ,r.pow_id,r.name as rouleName ,p.name powerName,p.id as powerId FROM userInfo u "
                     + "left join organization o on u.userOrgNum=o.orgNum  left join roleInfo r on u.userRole=r.id left join power p on r.pow_id=p.id "
-                    + "where u.userIdcd='%s' and u.userPwd='%s' and u.id=(select d.deviceUser from device d where d.deviceMac='%s')",
+                    + "left join device d on  d.deviceMac='%s' where u.userIdcd='%s' and u.userPwd='%s' and u.id=(select d.deviceUser from device d where d.deviceMac='%s')",
                     UtileSmart.getStringFromMap(paramMap, paramKey_userIdcd), UtileSmart.getStringFromMap(paramMap, paramKey_userPwd), UtileSmart.getStringFromMap(paramMap, paramKey_deviceMac));
 
             resultMap = DBHelper.ExecuteSqlSelectReturnMap(mamageSysAnalyze.getRSID(), sqlStr, "userInfo");

@@ -97,34 +97,37 @@ public class SignCommon {
      * @return
      * @throws java.lang.Exception
      */
-    public static boolean verifySign(String token, boolean occurException) throws Exception {
-        //TODO，需要验证去掉如下的token空判断
-        if (token == null || token.isEmpty()) {
-            return true;
-        }
+    public static SignInformationModel verifySign(String token, boolean occurException) throws Exception {
         SignInformationModel tempEvm = null;
-
-        for (SignInformationModel SignRecord : SignRecords) {
-            if (SignRecord.token.equals(token)) {
-                tempEvm = SignRecord;
-                break;
+        try {
+            //TODO，需要验证去掉如下的token空判断
+            if (token == null || token.isEmpty()) {
+                return tempEvm;
             }
-        }
-        if (tempEvm == null) {
-            if (occurException) {
+
+            for (SignInformationModel SignRecord : SignRecords) {
+                if (SignRecord.token.equals(token)) {
+                    tempEvm = SignRecord;
+                    break;
+                }
+            }
+            if (tempEvm == null) {
+                if (occurException) {
+                    throw new Exception("会话无效，请您重新登录。");
+                }
+                return tempEvm;
+            }
+            boolean isTimeout = new Date().getTime() - tempEvm.signDateTime < (1000 * SignVerifyTimeOut);
+            if (!isTimeout && occurException) {
                 throw new Exception("会话无效，请您重新登录。");
             }
-            return false;
+            //验证通过
+            return tempEvm;
+        } finally {
+            synchronized (SignRecords) {
+                tempEvm.signDateTime = new Date().getTime();
+            }
         }
-        boolean isTimeout = new Date().getTime() - tempEvm.signDateTime < (1000 * SignVerifyTimeOut);
-        if (!isTimeout && occurException) {
-            throw new Exception("会话无效，请您重新登录。");
-        }
-        //验证通过
-        synchronized (SignRecords) {
-            tempEvm.signDateTime = new Date().getTime();
-        }
-        return isTimeout;
 
     }
 }
