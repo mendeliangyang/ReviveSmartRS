@@ -12,7 +12,9 @@ import common.UtileSmart;
 import common.model.ExecuteResultParam;
 import common.model.ResponseResultCode;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.POST;
@@ -236,6 +238,48 @@ public class MamageSystemResource {
         } catch (Exception e) {
             return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(e.getLocalizedMessage(), param, e));
         } finally {
+        }
+    }
+
+    @POST
+    @Path("SetTableInfoVisable")
+    public String SetTableInfoVisable(String param) {
+        String paramKey_setUpDatas = "setUpDatas";
+        String paramKey_tablename = "tablename";
+        String paramKey_name = "name";
+        String paramKey_visable = "visable";
+
+        ExecuteResultParam resultParam = null;
+        JSONObject tempObject = null;
+        Set<String> sqlStrs = null;
+        Map<String, Object> paramMap = null;
+        try {
+            paramMap = new HashMap<String, Object>();
+
+            paramMap.put(paramKey_setUpDatas, null);
+
+            mamageSysAnalyze.AnalyzeParamBodyToMap(param, paramMap);
+            JSONArray jsonArray = UtileSmart.GetJSONArrayFromMap(paramMap, paramKey_setUpDatas);
+
+            sqlStrs = new HashSet<>();
+            for (Object temp : jsonArray) {
+                tempObject = JSONObject.fromObject(temp);
+                sqlStrs.add(String.format("update tableInfo set visable='%s' where tablename='%s' and name='%s' ", UtileSmart.GetJsonString(tempObject, paramKey_visable),
+                        UtileSmart.GetJsonString(tempObject, paramKey_tablename),
+                        UtileSmart.GetJsonString(tempObject, paramKey_name)));
+            }
+
+            resultParam = DBHelper.ExecuteSql(mamageSysAnalyze.getRSID(), sqlStrs);
+            if (resultParam.ResultCode >= 0) {
+                return formationResult.formationResult(ResponseResultCode.Success, resultParam);
+            } else {
+                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(resultParam.errMsg, param));
+            }
+        } catch (Exception e) {
+            return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(e.getLocalizedMessage(), param, e));
+        } finally {
+            paramMap.clear();
+            UtileSmart.FreeObjects(resultParam, param, sqlStrs, paramMap);
         }
     }
 

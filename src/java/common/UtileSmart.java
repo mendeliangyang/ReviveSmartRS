@@ -19,6 +19,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 /**
@@ -40,7 +41,7 @@ public class UtileSmart {
         try {
             md5 = MessageDigest.getInstance("MD5");
         } catch (Exception e) {
-            RSLogger.ErrorLogInfo("string2MD5 error"+e.getLocalizedMessage(), e);
+            RSLogger.ErrorLogInfo("string2MD5 error" + e.getLocalizedMessage(), e);
             return "";
         }
         char[] charArray = inStr.toCharArray();
@@ -128,16 +129,29 @@ public class UtileSmart {
         return getObjectFromMap(map, key, true).toString();
     }
 
-    public static Object[] getListFromMap(Map<String, Object> map, String key) throws Exception {
-        return (Object[]) getObjectFromMap(map, key, true);
-    }
+//    public static Object[] getListFromMap(Map<String, Object> map, String key) throws Exception {
+//        return (Object[]) getObjectFromMap(map, key, true);
+//    }
 
     public static String tryGetStringFromMap(Map<String, Object> map, String key) throws Exception {
         return getObjectFromMap(map, key, false).toString();
     }
 
-    public static Object[] tryGetListFromMap(Map<String, Object> map, String key) throws Exception {
-        return (Object[]) getObjectFromMap(map, key, false);
+//    public static Object[] tryGetListFromMap(Map<String, Object> map, String key) throws Exception {
+//        return (Object[]) getObjectFromMap(map, key, false);
+//    }
+
+    public static JSONArray tryGetJSONArrayFromMap(Map<String, Object> map, String key) throws Exception {
+        return (JSONArray) getObjectFromMap(map, key, false);
+    }
+    public static JSONObject tryGetJSONObjectFromMap(Map<String, Object> map, String key) throws Exception {
+        return (JSONObject) getObjectFromMap(map, key, false);
+    }
+     public static JSONArray GetJSONArrayFromMap(Map<String, Object> map, String key) throws Exception {
+        return (JSONArray) getObjectFromMap(map, key, true);
+    }
+    public static JSONObject GetJSONObjectFromMap(Map<String, Object> map, String key) throws Exception {
+        return (JSONObject) getObjectFromMap(map, key, true);
     }
 
     public static void cleanMapTDString(Map<String, Map<String, String>> mapOrigin) {
