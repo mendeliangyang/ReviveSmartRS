@@ -76,7 +76,7 @@ public class FileDepotRS {
 //                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("请您先登录系统。", param));
 //            }
             // verify token
-            rsSvc.SignVerify.SignCommon.verifySign(paramModel.token, true);
+            common.SignVerify.SignCommon.verifySign(paramModel.token, true);
 
             if (paramModel.fileDetaile == null || paramModel.fileDetaile.isEmpty()) {
                 return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("base64串为空。", param));
@@ -223,7 +223,7 @@ public class FileDepotRS {
         paramModel.fileDetaile.add(detailModel);
 
         try {
-            rsSvc.SignVerify.SignCommon.verifySign(paramModel.token, true);
+            common.SignVerify.SignCommon.verifySign(paramModel.token, true);
             return SaveUpLoadFile(formFileData, paramModel, false);
         } catch (Exception ex) {
             return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(ex.getLocalizedMessage(), paramModel.toStringInformation(), ex));
@@ -245,7 +245,7 @@ public class FileDepotRS {
         try {
             paramModel = analyzeUpLoadFileJsonStr(strParam, false);
 
-            rsSvc.SignVerify.SignCommon.verifySign(paramModel.token, true);
+            common.SignVerify.SignCommon.verifySign(paramModel.token, true);
 
             return SaveUpLoadFile(formFileData, paramModel, false);
         } catch (Exception ex) {
@@ -536,7 +536,7 @@ public class FileDepotRS {
 //                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("请您先登录系统。", strParam));
 //            }
             
-            rsSvc.SignVerify.SignCommon.verifySign(paramModel.token, true);
+            common.SignVerify.SignCommon.verifySign(paramModel.token, true);
             
             resultModel = InvalidDepotFile(paramModel);
             if (resultModel.ResultCode >= 0) {

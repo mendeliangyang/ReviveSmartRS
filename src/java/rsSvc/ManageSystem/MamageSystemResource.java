@@ -22,7 +22,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-import rsSvc.SignVerify.SignInformationModel;
+import common.SignVerify.SignInformationModel;
 
 /**
  * REST Web Service
@@ -57,7 +57,7 @@ public class MamageSystemResource {
 
             mamageSysAnalyze.AnalyzeParamBodyToMap(param, paramMap);
             // verify token
-            rsSvc.SignVerify.SignCommon.verifySign(mamageSysAnalyze.getToken(), true);
+            common.SignVerify.SignCommon.verifySign(mamageSysAnalyze.getToken(), true);
 
             sqlStr = String.format("SELECT count(*) as orgUpNumCount FROM organization where orgUpNum='%s'",
                     UtileSmart.getStringFromMap(paramMap, paramKey_orgNum));
@@ -114,7 +114,7 @@ public class MamageSystemResource {
 
             mamageSysAnalyze.AnalyzeParamBodyToMap(param, paramMap);
             // verify token
-            rsSvc.SignVerify.SignCommon.verifySign(mamageSysAnalyze.getToken(), true);
+            common.SignVerify.SignCommon.verifySign(mamageSysAnalyze.getToken(), true);
 
             //SELECT count(*) as orgUpNumCount FROM organization where orgUpNum='%s'
             sqlStr = String.format("select deviceUser from device where id='%s'",
@@ -180,7 +180,7 @@ public class MamageSystemResource {
                     }
                 }
 
-                SignInformationModel signModel = rsSvc.SignVerify.SignCommon.SignIn(resultMap.keySet().iterator().next(), null, null);
+                SignInformationModel signModel = common.SignVerify.SignCommon.SignIn(resultMap.keySet().iterator().next(), null, null);
                 return formationResult.formationResult(ResponseResultCode.Success, signModel.token, new ExecuteResultParam(resultMap, false));
             } else {
                 return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("输入用户名或密码错误或设备mac值不匹配.", param));
@@ -499,7 +499,7 @@ public class MamageSystemResource {
 
             resultMap = DBHelper.ExecuteSqlSelectReturnMap(mamageSysAnalyze.getRSID(), sqlStr, "userInfo");
             if (resultMap != null && resultMap.size() == 1) {
-                SignInformationModel signModel = rsSvc.SignVerify.SignCommon.SignIn(resultMap.keySet().iterator().next(), null, null);
+                SignInformationModel signModel = common.SignVerify.SignCommon.SignIn(resultMap.keySet().iterator().next(), null, null);
                 return formationResult.formationResult(ResponseResultCode.Success, signModel.token, new ExecuteResultParam(resultMap, false));
             } else {
                 return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("输入用户名或密码错误.", param));
@@ -517,7 +517,7 @@ public class MamageSystemResource {
     @Path("SignOutM")
     public String SignOutM(String param) {
         try {
-            rsSvc.SignVerify.SignCommon.SignOut("");
+            common.SignVerify.SignCommon.SignOut("");
             return formationResult.formationResult(ResponseResultCode.Success);
         } catch (Exception e) {
             return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(e.getLocalizedMessage(), param, e));
@@ -575,7 +575,7 @@ public class MamageSystemResource {
             //SELECT * FROM organization where orgLevel=1
             mamageSysAnalyze.AnalyzeParamBodyToMap(param, null);
             // verify token
-            rsSvc.SignVerify.SignCommon.verifySign(mamageSysAnalyze.getToken(), true);
+            common.SignVerify.SignCommon.verifySign(mamageSysAnalyze.getToken(), true);
             //分级递归查询
             //jsonArray = SearchOrgRoot(mamageSysAnalyze.getRSID());
             //一次性查询，本地递归组装数据

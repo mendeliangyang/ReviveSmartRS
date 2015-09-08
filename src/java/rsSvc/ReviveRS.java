@@ -292,7 +292,7 @@ public class ReviveRS {
 //            if (!isSignOn) {
 //                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("请您先登录系统。", param));
 //            }
-            rsSvc.SignVerify.SignCommon.verifySign(paramModel.token, true);
+            common.SignVerify.SignCommon.verifySign(paramModel.token, true);
 
             //判断是否有分页
             if ((paramModel.db_pageNum != -1 && paramModel.db_pageSize != -1) || (paramModel.db_skipNum != -1 && paramModel.db_topNum != -1)) {
@@ -341,7 +341,7 @@ public class ReviveRS {
 //            if (!isSignOn) {
 //                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("请您先登录系统。", param));
 //            }
-            rsSvc.SignVerify.SignCommon.verifySign(paramModel.token, true);
+            common.SignVerify.SignCommon.verifySign(paramModel.token, true);
 
             sqlStr = DBHelper.SqlSelectCountFactory(paramModel);
             //执行sql查询
@@ -373,7 +373,7 @@ public class ReviveRS {
 //            if (!isSignOn) {
 //                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("请您先登录系统。", param));
 //            }
-            rsSvc.SignVerify.SignCommon.verifySign(paramModel.token, true);
+            common.SignVerify.SignCommon.verifySign(paramModel.token, true);
 
             resultParam = DBHelper.ExecuteSql(paramModel.rsid, DBHelper.SqlUpdateFactory(paramModel));
 
@@ -406,7 +406,7 @@ public class ReviveRS {
 //            if (!isSignOn) {
 //                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("请您先登录系统。", param));
 //            }
-            rsSvc.SignVerify.SignCommon.verifySign(paramModel.token, true);
+            common.SignVerify.SignCommon.verifySign(paramModel.token, true);
 
             resultParam = DBHelper.ExecuteSql(paramModel.rsid, DBHelper.SqlDeleteFactory(paramModel));
             if (resultParam.ResultCode >= 0) {
@@ -437,7 +437,7 @@ public class ReviveRS {
 //            if (!isSignOn) {
 //                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("请您先登录系统。", param));
 //            }
-            rsSvc.SignVerify.SignCommon.verifySign(paramModel.token, true);
+            common.SignVerify.SignCommon.verifySign(paramModel.token, true);
 
             sqlResultModel = DBHelper.SqlInsertFactory(paramModel);
             //如果有identity 开始的sql语句以 SET NOCOUNT  ON 开始 执行查询方法
