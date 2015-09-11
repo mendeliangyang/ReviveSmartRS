@@ -679,4 +679,70 @@ public class MamageSystemResource {
         }
     }
 
+    void findDownSys(Map<String, Map<String, String>> map, JSONObject obj, String upOrgNum) {
+        for (Map<String, String> value : map.values()) {
+            if (value.get("sysTreeNum") == null || value.get("sysTreeUpNum") == null) {
+                continue;
+            }
+            if (value.get("sysTreeUpNum").equals(upOrgNum) && !value.get("sysTreeNum").equals(value.get("sysTreeUpNum"))) {
+                JSONArray downArray = null;
+                JSONObject objDown = JSONObject.fromObject(value);
+                findDownSys(map, objDown, value.get("sysTreeNum"));
+                if (obj.containsKey("children")) {
+                    downArray = obj.getJSONArray("children");
+                }
+                if (downArray == null) {
+                    downArray = new JSONArray();
+                }
+                downArray.add(objDown);
+                obj.remove("children");
+                obj.accumulate("children", downArray);
+            }
+        }
+    }
+
+    @POST
+    @Path("SelectAllSys")
+    public String SelectAllSys(String param) {
+        try {
+            JSONArray jsonArray = null;
+            //SELECT * FROM organization where orgLevel=1
+            mamageSysAnalyze.AnalyzeParamBodyToMap(param, null);
+            // verify token
+            common.SignVerify.SignCommon.verifySign(mamageSysAnalyze.getToken(), true);
+            //分级递归查询
+            //jsonArray = SearchOrgRoot(mamageSysAnalyze.getRSID());
+            //一次性查询，本地递归组装数据
+            jsonArray = SelectRootSys(mamageSysAnalyze.getRSID());
+            JSONObject jsonObj = new JSONObject();
+            jsonObj.accumulate(DeployInfo.ResultDataTag, jsonArray);
+            return formationResult.formationResult(ResponseResultCode.Success, new ExecuteResultParam(jsonObj));
+        } catch (Exception ex) {
+            return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(ex.getLocalizedMessage(), param, ex));
+        }
+    }
+
+    public JSONArray SelectRootSys(String rsid) throws Exception {
+        Map<String, Map<String, String>> map = null;
+        try {
+            map = DBHelper
+                    .ExecuteSqlSelectReturnMap(rsid, String.format("SELECT s.sysTreeName [text], s.* FROM sysTree s "), "sysTree");
+            JSONArray jsonArray = new JSONArray();
+            for (Map<String, String> value : map.values()) {
+                if (value.get("sysTreeNum") == null || value.get("sysTreeUpNum") == null) {
+                    continue;
+                }
+                if (value.get("sysTreeNum").equals(value.get("sysTreeUpNum"))) {
+                    JSONObject obj = JSONObject.fromObject(value);
+                    findDownSys(map, obj, value.get("sysTreeNum"));
+                    jsonArray.add(obj);
+                }
+            }
+            return jsonArray;
+        } finally {
+            UtileSmart.cleanMapTDString(map);
+        }
+
+    }
+
 }
