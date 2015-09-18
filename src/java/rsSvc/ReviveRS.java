@@ -379,7 +379,8 @@ public class ReviveRS {
 
             if (resultParam.ResultCode >= 0) {
                 JMSQueueMessage.AsyncWriteMessage(paramModel.db_tableName, 2, paramModel.pkValues);
-                return formationResult.formationResult(ResponseResultCode.Success, new ExecuteResultParam());
+                resultParam.errMsg = resultParam.ResultCode + "";
+                return formationResult.formationResult(ResponseResultCode.Success, resultParam);
             } else {
                 return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(resultParam.errMsg, param));
             }
@@ -410,7 +411,8 @@ public class ReviveRS {
 
             resultParam = DBHelper.ExecuteSql(paramModel.rsid, DBHelper.SqlDeleteFactory(paramModel));
             if (resultParam.ResultCode >= 0) {
-                return formationResult.formationResult(ResponseResultCode.Success, new ExecuteResultParam());
+                resultParam.errMsg = resultParam.ResultCode + "";
+                return formationResult.formationResult(ResponseResultCode.Success, resultParam);
             } else {
                 return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(resultParam.errMsg, param));
             }

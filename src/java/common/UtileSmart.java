@@ -132,7 +132,6 @@ public class UtileSmart {
 //    public static Object[] getListFromMap(Map<String, Object> map, String key) throws Exception {
 //        return (Object[]) getObjectFromMap(map, key, true);
 //    }
-
     public static String tryGetStringFromMap(Map<String, Object> map, String key) throws Exception {
         return getObjectFromMap(map, key, false).toString();
     }
@@ -140,16 +139,18 @@ public class UtileSmart {
 //    public static Object[] tryGetListFromMap(Map<String, Object> map, String key) throws Exception {
 //        return (Object[]) getObjectFromMap(map, key, false);
 //    }
-
     public static JSONArray tryGetJSONArrayFromMap(Map<String, Object> map, String key) throws Exception {
         return (JSONArray) getObjectFromMap(map, key, false);
     }
+
     public static JSONObject tryGetJSONObjectFromMap(Map<String, Object> map, String key) throws Exception {
         return (JSONObject) getObjectFromMap(map, key, false);
     }
-     public static JSONArray GetJSONArrayFromMap(Map<String, Object> map, String key) throws Exception {
+
+    public static JSONArray GetJSONArrayFromMap(Map<String, Object> map, String key) throws Exception {
         return (JSONArray) getObjectFromMap(map, key, true);
     }
+
     public static JSONObject GetJSONObjectFromMap(Map<String, Object> map, String key) throws Exception {
         return (JSONObject) getObjectFromMap(map, key, true);
     }
@@ -248,14 +249,32 @@ public class UtileSmart {
      *
      * @param jsonObj
      * @param strParam
-     * @return 没有 strParam 属性返回null
+     * @param isException 没有 strParam 属性，true引发异常，false返回null
+     * @return
+     * @throws Exception
      */
-    public static String GetJsonString(JSONObject jsonObj, String strParam) {
+    public static String TryGetJsonString(JSONObject jsonObj, String strParam, boolean isException) throws Exception {
         try {
             return GetJsonString(jsonObj, strParam, false);
         } catch (Exception ex) {
             common.RSLogger.ErrorLogInfo(String.format("UtileSmart: GetJsonString error:%s", ex.getLocalizedMessage()), ex);
         }
         return null;
+    }
+
+    /**
+     *
+     * @param jsonObj
+     * @param strParam
+     * @return 没有 strParam 属性返回null
+     */
+    public static String GetJsonString(JSONObject jsonObj, String strParam) throws Exception {
+        try {
+            return jsonObj.getString(strParam);
+        } catch (Exception e) {
+            RSLogger.ErrorLogInfo("jsonObject There is no " + strParam + e.getLocalizedMessage(), e);
+            throw new Exception("jsonObject There is no " + strParam);
+        }
+
     }
 }
