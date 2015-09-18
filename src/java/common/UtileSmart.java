@@ -249,11 +249,10 @@ public class UtileSmart {
      *
      * @param jsonObj
      * @param strParam
-     * @param isException 没有 strParam 属性，true引发异常，false返回null
      * @return
      * @throws Exception
      */
-    public static String TryGetJsonString(JSONObject jsonObj, String strParam, boolean isException) throws Exception {
+    public static String TryGetJsonString(JSONObject jsonObj, String strParam) throws Exception {
         try {
             return GetJsonString(jsonObj, strParam, false);
         } catch (Exception ex) {

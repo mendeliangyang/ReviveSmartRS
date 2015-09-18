@@ -29,8 +29,8 @@ public class AnalyzeMsg implements IAnalyzeMessage {
             msgclientPush = new MsgClientPushParam();
             msgclientPush.rsid = jsonObj.getJSONObject("head").getString("RSID");
             jsonBody = jsonObj.getJSONObject("body");
-            msgclientPush.userName = common.UtileSmart.GetJsonString(jsonBody, "rs_Name");
-            msgclientPush.userPwd = common.UtileSmart.GetJsonString(jsonBody, "rs_Pwd");
+            msgclientPush.userName = common.UtileSmart.TryGetJsonString(jsonBody, "rs_Name");
+            msgclientPush.userPwd = common.UtileSmart.TryGetJsonString(jsonBody, "rs_Pwd");
             jsonArrayPushIds = jsonBody.getJSONArray("pushId");
             for (int i = 0; i < jsonArrayPushIds.size(); i++) {
                 msgclientPush.pushIds.add(jsonArrayPushIds.getString(i));

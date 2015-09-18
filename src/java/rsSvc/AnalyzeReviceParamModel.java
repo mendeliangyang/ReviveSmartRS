@@ -22,7 +22,7 @@ import net.sf.json.JSONObject;
  * @author Administrator
  */
 public class AnalyzeReviceParamModel implements IAnalyzeReviceParamModel {
-    
+
     @Override
     public ReviveRSParamModel transferReviveRSParamModel(String param, OperateTypeEnum operateType) throws Exception {
         ReviveRSParamModel paramModel = null;
@@ -34,24 +34,24 @@ public class AnalyzeReviceParamModel implements IAnalyzeReviceParamModel {
             jsonObj = JSONObject.fromObject(param);
             jsonHead = jsonObj.getJSONObject("head");
             paramModel = new ReviveRSParamModel();
-            paramModel.rsid = UtileSmart.GetJsonString(jsonHead, "RSID", true);
-            paramModel.token = UtileSmart.GetJsonString(jsonHead, "token");
+            paramModel.rsid = UtileSmart.TryGetJsonString(jsonHead, "RSID");
+            paramModel.token = UtileSmart.TryGetJsonString(jsonHead, "token");
             //file operate
             if (OperateTypeEnum.fileOperate == operateType) {
-                paramModel.handle = UtileSmart.GetJsonString(jsonHead, "handle");
+                paramModel.handle = UtileSmart.TryGetJsonString(jsonHead, "handle");
 // todo    public String fileColumn; //base64，或者上传文件指定保存文件的列名称
             }
             jsonBody = jsonObj.getJSONObject("body");
             jsonNote = jsonBody.getJSONObject("note");
             jsonValues = jsonBody.getJSONObject("values");
-            
-            paramModel.db_tableName = UtileSmart.GetJsonString(jsonNote, DeployInfo.paramTableName, true);
+
+            paramModel.db_tableName = UtileSmart.TryGetJsonString(jsonNote, DeployInfo.paramTableName);
             //get primary value.if string single clolumn ,if object multi column
             if (jsonNote.containsKey("pkValue")) {
                 objPkvalue = jsonNote.get("pkValue");
                 if (objPkvalue instanceof String) {
                     //String
-                    paramModel.pkValue = UtileSmart.GetJsonString(jsonNote, "pkValue");
+                    paramModel.pkValue = UtileSmart.TryGetJsonString(jsonNote, "pkValue");
                 } else if (objPkvalue instanceof JSONObject) {
                     //jsonObject
                     paramModel.pkValues = new HashMap<>();
@@ -64,12 +64,12 @@ public class AnalyzeReviceParamModel implements IAnalyzeReviceParamModel {
             }
             // select
             if (OperateTypeEnum.select == operateType) {
-                paramModel.sql = UtileSmart.GetJsonString(jsonValues, "sql");
-                paramModel.db_orderBy = UtileSmart.GetJsonString(jsonValues, "db_orderBy");
-                paramModel.db_pageSize = UtileSmart.overrideParseShort(UtileSmart.GetJsonString(jsonNote, "db_pageSize"));
-                paramModel.db_pageNum = UtileSmart.overrideParseInt(UtileSmart.GetJsonString(jsonNote, "db_pageNum"));
-                paramModel.db_skipNum = UtileSmart.overrideParseInt(UtileSmart.GetJsonString(jsonNote, "db_skipNum"));
-                paramModel.db_topNum = UtileSmart.overrideParseShort(UtileSmart.GetJsonString(jsonNote, "db_topNum"));
+                paramModel.sql = UtileSmart.TryGetJsonString(jsonValues, "sql");
+                paramModel.db_orderBy = UtileSmart.TryGetJsonString(jsonValues, "db_orderBy");
+                paramModel.db_pageSize = UtileSmart.overrideParseShort(UtileSmart.TryGetJsonString(jsonNote, "db_pageSize"));
+                paramModel.db_pageNum = UtileSmart.overrideParseInt(UtileSmart.TryGetJsonString(jsonNote, "db_pageNum"));
+                paramModel.db_skipNum = UtileSmart.overrideParseInt(UtileSmart.TryGetJsonString(jsonNote, "db_skipNum"));
+                paramModel.db_topNum = UtileSmart.overrideParseShort(UtileSmart.TryGetJsonString(jsonNote, "db_topNum"));
                 if (jsonNote.containsKey("url_columns")) {
                     paramModel.db_RULcolumns = new HashSet<>();
                     url_columns = jsonNote.getJSONArray("url_columns");
@@ -113,7 +113,7 @@ public class AnalyzeReviceParamModel implements IAnalyzeReviceParamModel {
             common.UtileSmart.FreeObjects(jsonObj, jsonBody, jsonNote, jsonHead, jsonValues, url_columns, db_columns, strTemp, operateType);
         }
     }
-    
+
     @Override
     public SignModel transferReviveRSSignModel(String param, OperateTypeEnum operateType) throws Exception {
         SignModel signModel = null;
@@ -164,9 +164,9 @@ public class AnalyzeReviceParamModel implements IAnalyzeReviceParamModel {
             common.UtileSmart.FreeObjects(jsonObj, jsonBody, jsonNote, jsonHead, jsonValues);
         }
         if (isMustSign) {
-            
+
         }
         return jsonObj;
     }
-    
+
 }
