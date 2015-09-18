@@ -532,6 +532,7 @@ public class MamageSystemResource {
         String paramKey_tablename = "tablename";
         String paramKey_name = "name";
         String paramKey_visable = "visable";
+        String paramKey_width = "width";
 
         ExecuteResultParam resultParam = null;
         JSONObject tempObject = null;
@@ -548,7 +549,8 @@ public class MamageSystemResource {
             sqlStrs = new HashSet<>();
             for (Object temp : jsonArray) {
                 tempObject = JSONObject.fromObject(temp);
-                sqlStrs.add(String.format("update tableInfo set visable='%s' where tablename='%s' and name='%s' ", UtileSmart.GetJsonString(tempObject, paramKey_visable),
+                sqlStrs.add(String.format("update tableInfo set visable='%s' ,width='%s' where tablename='%s' and name='%s' ", UtileSmart.GetJsonString(tempObject, paramKey_visable),
+                        UtileSmart.GetJsonString(tempObject, paramKey_width),
                         UtileSmart.GetJsonString(tempObject, paramKey_tablename),
                         UtileSmart.GetJsonString(tempObject, paramKey_name)));
             }
