@@ -304,6 +304,9 @@ public class DBHelper {
             while (keys.hasNext()) {
                 String key = (String) keys.next();
                 tempTableColumnDetail = pTableInfo.getColumnDetail(key);
+                if (tempTableColumnDetail == null) {
+                    throw new Exception(" error: column does not exist : " + key);
+                }
                 sqlsb.append(key).append("= ");
                 if (paramModel.db_valueColumns.get(key).equals("db_defaultV")) {
                     sqlsb.append(" ").append("default").append(" ,");
