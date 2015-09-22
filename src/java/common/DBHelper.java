@@ -244,15 +244,13 @@ public class DBHelper {
                 key = null;
             }
             // qualification 1 primariy column no value , 2 primary column data type is charset, 3 primary column is  single column
-            if (primaryColumnNoValue) {
-                singlePrimary = pTableInfo.getPrimariyColumn();
-                if (singlePrimary != null && singlePrimary.dataType == DataBaseTypeEnum.charset) {
-                    sqlResultModel.columnValue = new HashMap<>(); //new CollectionsUtils.ConstMap<>();
-                    strUUIDTemp = UUID.randomUUID().toString();
-                    sqlResultModel.columnValue.put(singlePrimary.name, strUUIDTemp);
-                    tempSql.append(tempColumn).append(singlePrimary.name).append(" ) VALUES (");
-                    tempSql.append(tempValue).append("'").append(strUUIDTemp).append("'").append(")");
-                }
+            singlePrimary = pTableInfo.getPrimariyColumn();
+            if (primaryColumnNoValue && singlePrimary != null && singlePrimary.dataType == DataBaseTypeEnum.charset) {
+                sqlResultModel.columnValue = new HashMap<>(); //new CollectionsUtils.ConstMap<>();
+                strUUIDTemp = UUID.randomUUID().toString();
+                sqlResultModel.columnValue.put(singlePrimary.name, strUUIDTemp);
+                tempSql.append(tempColumn).append(singlePrimary.name).append(" ) VALUES (");
+                tempSql.append(tempValue).append("'").append(strUUIDTemp).append("'").append(")");
 
             } else {
                 tempSql.append(tempColumn.substring(0, tempColumn.length() - 1)).append(" ) VALUES (");
