@@ -533,6 +533,7 @@ public class MamageSystemResource {
         String paramKey_name = "name";
         String paramKey_visable = "visable";
         String paramKey_width = "width";
+        String paramKey_simpleQuery = "simpleQuery";
 
         ExecuteResultParam resultParam = null;
         JSONObject tempObject = null;
@@ -549,14 +550,16 @@ public class MamageSystemResource {
             sqlStrs = new HashSet<>();
             for (Object temp : jsonArray) {
                 tempObject = JSONObject.fromObject(temp);
-                sqlStrs.add(String.format("update tableInfo set visable='%s' ,width='%s' where tablename='%s' and name='%s' ", UtileSmart.GetJsonString(tempObject, paramKey_visable),
+                sqlStrs.add(String.format("update tableInfo set visable='%s' ,width='%s',simpleQuery='%s' where tablename='%s' and name='%s' ", UtileSmart.GetJsonString(tempObject, paramKey_visable),
                         UtileSmart.GetJsonString(tempObject, paramKey_width),
+                        UtileSmart.GetJsonString(tempObject, paramKey_simpleQuery),
                         UtileSmart.GetJsonString(tempObject, paramKey_tablename),
                         UtileSmart.GetJsonString(tempObject, paramKey_name)));
             }
 
             resultParam = DBHelper.ExecuteSql(mamageSysAnalyze.getRSID(), sqlStrs);
             if (resultParam.ResultCode >= 0) {
+                resultParam.errMsg = resultParam.ResultCode + "";
                 return formationResult.formationResult(ResponseResultCode.Success, resultParam);
             } else {
                 return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(resultParam.errMsg, param));
