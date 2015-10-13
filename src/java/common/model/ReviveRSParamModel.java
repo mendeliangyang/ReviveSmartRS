@@ -5,6 +5,7 @@
  */
 package common.model;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -52,6 +53,8 @@ public class ReviveRSParamModel {
     public String treeNUpId;//树形节点数据父节点编号
     
     public String treeNColumn;//树形节点编号列名称
+    
+    public List<ReviveRSParamDBLeftLinkModel> db_leftLink;// 关联从表集合
 
     public String getInformation() {
         StringBuffer sb = new StringBuffer();

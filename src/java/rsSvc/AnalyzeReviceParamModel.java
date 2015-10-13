@@ -8,8 +8,10 @@ package rsSvc;
 import common.DeployInfo;
 import common.UtileSmart;
 import common.model.OperateTypeEnum;
+import common.model.ReviveRSParamDBLeftLinkModel;
 import common.model.ReviveRSParamModel;
 import common.model.SignModel;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -26,8 +28,8 @@ public class AnalyzeReviceParamModel implements IAnalyzeReviceParamModel {
     @Override
     public ReviveRSParamModel transferReviveRSParamModel(String param, OperateTypeEnum operateType) throws Exception {
         ReviveRSParamModel paramModel = null;
-        JSONObject jsonObj = null, jsonBody = null, jsonNote = null, jsonHead = null, jsonValues = null, jsonPkvalue = null;
-        JSONArray url_columns = null, db_columns = null;
+        JSONObject jsonObj = null, jsonBody = null, jsonNote = null, jsonHead = null, jsonValues = null, jsonPkvalue = null, jsonLeftLink = null;
+        JSONArray url_columns = null, db_columns = null, db_leftLink = null, dbll_linkSeekCol = null;
         String strTemp = null;
         Object objPkvalue = null;
         try {
@@ -82,6 +84,26 @@ public class AnalyzeReviceParamModel implements IAnalyzeReviceParamModel {
                     db_columns = jsonNote.getJSONArray("db_columns");
                     for (int i = 0; i < db_columns.size(); i++) {
                         paramModel.db_columns.add(db_columns.getString(i));
+                    }
+                }
+
+                //analyze db_leftLink
+                if (jsonNote.containsKey("db_leftLink")) {
+                    paramModel.db_leftLink = new ArrayList<ReviveRSParamDBLeftLinkModel>();
+                    db_leftLink = jsonNote.getJSONArray("db_leftLink");
+                    ReviveRSParamDBLeftLinkModel tempLeftLinkModel = null;
+                    for (int i = 0; i < db_leftLink.size(); i++) {
+                        tempLeftLinkModel = new ReviveRSParamDBLeftLinkModel();
+                        jsonLeftLink = db_leftLink.getJSONObject(i);
+                        tempLeftLinkModel.dbll_tableName = jsonLeftLink.getString("dbll_tableName");
+                        tempLeftLinkModel.dbll_sourceCol = jsonLeftLink.getString("dbll_sourceCol");
+                        tempLeftLinkModel.dbll_linkCol = jsonLeftLink.getString("dbll_linkCol");
+                        dbll_linkSeekCol = jsonLeftLink.getJSONArray("dbll_linkSeekCol");
+                        tempLeftLinkModel.dbll_linkSeekCol = new ArrayList<String>();
+                        for (int j = 0; j < dbll_linkSeekCol.size(); j++) {
+                            tempLeftLinkModel.dbll_linkSeekCol.add(dbll_linkSeekCol.getString(j));
+                        }
+                        paramModel.db_leftLink.add(tempLeftLinkModel);
                     }
                 }
             }
