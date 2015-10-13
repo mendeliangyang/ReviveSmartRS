@@ -44,6 +44,14 @@ public class ReviveRSParamModel {
     public Map<String, String> db_valueColumns;//添加，指定列名称和值  ，修改，指定修改的列和值
 
     public Map<String, String> db_valueFilter;//修改，安装列值来修改数据，删除，安装列值来删除数据
+    
+    public String treeNId;// 树形数据的树形节点编号
+    
+    public String treeNUpColumn;//树形节点数据父节点名称
+    
+    public String treeNUpId;//树形节点数据父节点编号
+    
+    public String treeNColumn;//树形节点编号列名称
 
     public String getInformation() {
         StringBuffer sb = new StringBuffer();

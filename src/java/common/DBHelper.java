@@ -60,7 +60,7 @@ public class DBHelper {
             temp.append(tempSystemSet.dbName);
             //temp.append("?language=us_english&charset=cp936");
             // 1:pool-name,2:min,3:max,4:size,5:timeout,6:url,7:name,8:passwd
-            tempCp = new ConnectionPool(tempSystemSet.id, 5, 5, 6, ConnectionPoolTimeout, temp.toString(), tempSystemSet.dbUser, tempSystemSet.dbPwd);
+            tempCp = new ConnectionPool(tempSystemSet.id, 2, 4, 4, ConnectionPoolTimeout, temp.toString(), tempSystemSet.dbUser, tempSystemSet.dbPwd);
             tempCp.setAsyncDestroy(true);
             tempCp.setCaching(false);
             mapConnectionPool.put(tempSystemSet.id, tempCp);
@@ -218,6 +218,44 @@ public class DBHelper {
             }
 
             tempSql.append(" INSERT INTO ").append(paramModel.db_tableName).append("( ");
+
+            //需要组织默认的树编号
+            if (paramModel.treeNColumn != null && paramModel.treeNUpColumn != null) {
+                //查询该编号的数据类型
+                tempTableColumnDetail = pTableInfo.getColumnDetail(paramModel.treeNUpColumn);
+                if (tempTableColumnDetail == null) {
+                    throw new Exception("error: column detail Unknown ." + paramModel.treeNUpColumn);
+                }
+                tempColumn.append(paramModel.treeNColumn).append(" ,");
+                String tempTreeNId = paramModel.db_valueColumns.get(paramModel.treeNUpColumn);
+                // SELECT orgNum FROM dbo.organization order by orgNum desc 
+                String tempMaxTreeIdSqlWhere;
+                if (tempTableColumnDetail.dataType == DataBaseTypeEnum.number || tempTableColumnDetail.dataType == DataBaseTypeEnum.decimal) {
+                    tempMaxTreeIdSqlWhere = new StringBuffer().append(" ").append(tempTreeNId).append(" ").toString();
+                } else if (tempTableColumnDetail.dataType == DataBaseTypeEnum.charset || tempTableColumnDetail.dataType == DataBaseTypeEnum.date || tempTableColumnDetail.dataType == DataBaseTypeEnum.time || tempTableColumnDetail.dataType == DataBaseTypeEnum.datetime) {
+                    tempMaxTreeIdSqlWhere = new StringBuffer().append("'").append(tempTreeNId).append("'").toString();
+                } else {
+                    throw new Exception("error: columnTypeUnknown  key." + paramModel.treeNColumn);
+                }
+                String selectMaxTreeIdSql = new StringBuffer().append("select max(").append(paramModel.treeNColumn).append(") as treeNId  from ").append(paramModel.db_tableName).append(" where ").append(paramModel.treeNUpColumn).append("=").append(tempMaxTreeIdSqlWhere).toString();
+                String maxTreeNId = DBHelper.ExecuteSqlSelectOne(paramModel.rsid, selectMaxTreeIdSql);
+                String maxTreeNEnd = maxTreeNId.substring(maxTreeNId.length() - 2, maxTreeNId.length());
+                String maxTreeNStart = maxTreeNId.substring(0, maxTreeNId.length() - 2);
+                int iMaxTreeNEnd = Integer.parseInt(maxTreeNEnd);
+                tempTreeNId = maxTreeNStart + (iMaxTreeNEnd+1);
+                tempTableColumnDetail = pTableInfo.getColumnDetail(paramModel.treeNColumn);
+                if (tempTableColumnDetail == null) {
+                    throw new Exception("error: column detail Unknown ." + paramModel.treeNColumn);
+                }
+                if (tempTableColumnDetail.dataType == DataBaseTypeEnum.number || tempTableColumnDetail.dataType == DataBaseTypeEnum.decimal) {
+                    tempValue.append(" ").append(tempTreeNId).append(" ,");
+                } else if (tempTableColumnDetail.dataType == DataBaseTypeEnum.charset || tempTableColumnDetail.dataType == DataBaseTypeEnum.date || tempTableColumnDetail.dataType == DataBaseTypeEnum.time || tempTableColumnDetail.dataType == DataBaseTypeEnum.datetime) {
+                    tempValue.append("'").append(tempTreeNId).append("' ,");
+                } else {
+                    throw new Exception("error: columnTypeUnknown  key." + paramModel.treeNColumn);
+                }
+
+            }
 
             Iterator keys = paramModel.db_valueColumns.keySet().iterator();
             while (keys.hasNext()) {

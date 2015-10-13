@@ -87,6 +87,11 @@ public class AnalyzeReviceParamModel implements IAnalyzeReviceParamModel {
             }
             // insert or update
             if (OperateTypeEnum.insert == operateType || OperateTypeEnum.update == operateType) {
+                paramModel.treeNId = UtileSmart.TryGetJsonString(jsonNote, "treeNId");
+                paramModel.treeNColumn = UtileSmart.TryGetJsonString(jsonNote, "treeNColumn");
+                paramModel.treeNUpId = UtileSmart.TryGetJsonString(jsonNote, "treeNUpId");
+                paramModel.treeNUpColumn = UtileSmart.TryGetJsonString(jsonNote, "treeNUpColumn");
+
                 paramModel.db_valueColumns = new HashMap<>();
                 Iterator keys = jsonValues.keys();
                 while (keys.hasNext()) {

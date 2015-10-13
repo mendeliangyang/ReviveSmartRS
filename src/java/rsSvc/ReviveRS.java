@@ -79,9 +79,9 @@ public class ReviveRS {
         return "only test "; //NetHelper.test();
     }
 
-//    @POST
-//    @Path("UpLoadFile")
-//    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @POST
+    @Path("UpLoadFile")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
     public String UpLoadFile(
             @FormDataParam("file") InputStream fileInputStream,
             @FormDataParam("file") FormDataContentDisposition fileDisposition, @FormDataParam("param") String paramStr) {
@@ -161,8 +161,8 @@ public class ReviveRS {
 
     }
 
-//    @POST
-//    @Path("UpBase64File")
+    @POST
+    @Path("UpBase64File")
     public String UpBase64File(String param) {
         try {
             //加载json
