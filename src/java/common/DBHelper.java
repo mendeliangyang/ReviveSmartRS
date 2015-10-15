@@ -428,6 +428,9 @@ public class DBHelper {
                     }
                     sqlsb.append(" and");
                 }
+                if (sqlsb.lastIndexOf("and") == -1) {
+                    throw new Exception(String.format("no where."));
+                }
                 return sqlsb.substring(0, sqlsb.lastIndexOf("and"));
             }
         } catch (Exception e) {
