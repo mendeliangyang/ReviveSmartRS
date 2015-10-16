@@ -150,7 +150,7 @@ public class FileDepotRS {
         } catch (Exception e) {
             return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(e.getLocalizedMessage(), param, e));
         } finally {
-            if (saveFlag == 1) {
+            if (saveFlag == 1 && paramModel != null) {
                 DeleteFile(paramModel.fileDetaile);
             }
             common.UtileSmart.FreeObjects(strUpFileName, strSvcFileLocalName, sbFilePathTemp, sbTemp, resultParam, setStrSqls, paramModel);
@@ -533,9 +533,8 @@ public class FileDepotRS {
 //            if (!isSignOn) {
 //                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("请您先登录系统。", strParam));
 //            }
-            
             common.SignVerify.SignCommon.verifySign(paramModel.token, true);
-            
+
             resultModel = InvalidDepotFile(paramModel);
             if (resultModel.ResultCode >= 0) {
                 return formationResult.formationResult(ResponseResultCode.Success, new ExecuteResultParam(resultModel.ResultJsonObject));
