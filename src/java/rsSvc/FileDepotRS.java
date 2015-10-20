@@ -158,6 +158,114 @@ public class FileDepotRS {
 
     }
 
+    @POST
+    @Path("ModifyBase64File")
+    public String ModifyBase64File(String param) {
+        String strUpFileName = null, strSvcFileLocalName = null;
+        StringBuffer sbFilePathTemp = new StringBuffer(), sbTemp = new StringBuffer();
+        boolean bSvcFileExist;
+        ExecuteResultParam resultParam = null;
+        List<String> strSqls = new ArrayList<>();
+        int saveFlag = 1;
+        FileDepotParamModel paramModel = null;
+        try {
+            //解析参数
+            paramModel = analyzeBase64Param(param);
+
+//            boolean isSignOn = common.VerificationSign.verificationSignOn(paramModel.token, paramModel.rsid);
+//            if (!isSignOn) {
+//                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("请您先登录系统。", param));
+//            }
+            // verify token
+            common.SignVerify.SignCommon.verifySign(paramModel.token, true);
+
+            if (paramModel.fileDetaile == null || paramModel.fileDetaile.isEmpty()) {
+                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("base64串为空。", param));
+            }
+
+            for (DepotFileDetailModel fileDetaile : paramModel.fileDetaile) {
+                //检查文件路径，和文件是否存在
+                strUpFileName = fileDetaile.fileName;
+                //组织路径  root/rsid/date(yymmddhh)/Type
+                //第一级目录
+                sbFilePathTemp.append(paramModel.rsid);
+                sbTemp.append(DeployInfo.GetDeployFilePath()).append(File.separator).append(paramModel.rsid);
+                FileHelper.CheckFileExist(sbTemp.toString());
+                //二级目录
+                sbFilePathTemp.append(File.separator).append(common.UtileSmart.getCurrentDate());
+                sbTemp.append(File.separator).append(common.UtileSmart.getCurrentDate());
+                FileHelper.CheckFileExist(sbTemp.toString());
+
+                sbFilePathTemp.append(File.separator).append(fileDetaile.fileOwnType);
+                sbTemp.append(File.separator).append(fileDetaile.fileOwnType);
+                FileHelper.CheckFileExist(sbTemp.toString());
+                //检查上次文件是否存在
+                sbFilePathTemp.append(File.separator).append(strUpFileName).toString();
+                strSvcFileLocalName = sbTemp.append(File.separator).append(strUpFileName).toString();
+                bSvcFileExist = FileHelper.CheckFileExist(strSvcFileLocalName, false);
+                if (bSvcFileExist) {
+                    return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("文件已经存在，不能修改。请联系管理员维护附件系统。", param));
+                }
+
+                //判断数据库是否存在 ownid 和 fpath重复的数据，如果有数据重复不能上传文件
+                resultParam = DBHelper.ExecuteSqlOnceSelect(DeployInfo.MasterRSID, String.format("SELECT COUNT(*) AS ROWSCOUNT FROM FILEDEPOT WHERE OWNID<>'%s' AND FPATH='%s'", paramModel.ownid, sbFilePathTemp.toString()));
+                if (resultParam.ResultCode != 0) {
+                    return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(String.format("检查数据库文件信息发送错误。%s", resultParam.errMsg), param));
+                }
+                //检查ROWSCOUNT 不为0可以继续操作 ROWSCOUNT 不等于0表示有其他文件关联该文件，要求客户修改文件名称，或者联系管理员维护服务器文件
+                if (resultParam.ResultJsonObject != null) {
+                    if (Integer.parseInt(resultParam.ResultJsonObject.getJSONObject(DeployInfo.ResultDataTag).getString("ROWSCOUNT")) > 0) {
+                        return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(String.format("‘%s’,该文件名已经存在并于与其他业务数据关联，请修改文件名称重新提交，或者联系管理员维护附件服务器。", strUpFileName), param));
+                    }
+                }
+                //判断如果类型应该是纯字符串，如果包含 文件路径分隔符(File.separator) 错误路径
+                if (fileDetaile.fileOwnType.indexOf(File.separator) > 0) {
+                    return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(String.format("文件类型错误，类型中不应该包含文件分隔符", strUpFileName), paramModel.toStringInformation()));
+                }
+                //调用解析图片方法，返回路径
+                int baseIndex = fileDetaile.fileBase64Value.indexOf(";base64,");
+                if (!FileHelper.ConvertBase64ToImage(fileDetaile.fileBase64Value.substring(baseIndex + 8, fileDetaile.fileBase64Value.length()), strSvcFileLocalName)) {
+                    return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(String.format("%s: convert image failed", fileDetaile.fileName), param));
+                }
+                //本次文件保存成功，设置本地路径值，后续操作失败可以返回删除保存的文件
+                fileDetaile.fileLocalPath = strSvcFileLocalName;
+
+                StringBuffer sbSql = new StringBuffer();
+
+                sbSql.append(String.format("insert into FILEDEPOT_LS (FID,FNAME,FPATH,FSUMMARY,OWNID,OWNFILETYPE,UPLOADDATE) select  FID,FNAME,FPATH,FSUMMARY,OWNID,OWNFILETYPE,UPLOADDATE from FILEDEPOT  as t_f where t_f.OWNID='%s'  and t_f.FID ='%s' ", paramModel.ownid, fileDetaile.fileId));
+                strSqls.add(sbSql.toString());
+
+                //生成sql语句，待文件全部上传成功，保存到数据库
+                strSqls.add(String.format(
+                        "update FILEDEPOT set FNAME='%s',FPATH='%s',OWNFILETYPE='%s',UPLOADDATE=getdate()  where FID='%s' and OWNID='%s'",
+                        strUpFileName, sbFilePathTemp.toString(), fileDetaile.fileOwnType, fileDetaile.fileId, paramModel.ownid));
+                
+                
+                sbTemp.delete(0, sbTemp.length());
+                sbFilePathTemp.delete(0, sbFilePathTemp.length());
+            }
+            //保存数据到数据库
+            resultParam = DBHelper.ExecuteSql(DeployInfo.MasterRSID, strSqls);
+            if (resultParam.ResultCode >= 0) {
+                saveFlag = 0;
+                //保存成功，将数据库信息返回
+                resultParam = SelectDepotFileByOwn(new FileDepotParamModel(paramModel.ownid));
+                return formationResult.formationResult(ResponseResultCode.Success, new ExecuteResultParam(resultParam.ResultJsonObject));
+            } else {
+                //TODO 如果操作数据库失败，需要把之前上传的文件全部在服务器上删除，负责会影响下次上传
+                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(resultParam.errMsg, param));
+            }
+        } catch (Exception e) {
+            return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(e.getLocalizedMessage(), param, e));
+        } finally {
+            if (saveFlag == 1 && paramModel != null) {
+                DeleteFile(paramModel.fileDetaile);
+            }
+            common.UtileSmart.FreeObjects(strUpFileName, strSvcFileLocalName, sbFilePathTemp, sbTemp, resultParam, strSqls, paramModel);
+        }
+
+    }
+
     public FileDepotParamModel analyzeBase64Param(String strJson) throws Exception {
         JSONObject jsonObj = null;
         JSONObject jsonHead = null;
@@ -181,7 +289,12 @@ public class FileDepotRS {
                 jsonTempBase64 = ((JSONObject) arrayBase641);
                 tempDetailModel = new DepotFileDetailModel();
                 tempDetailModel.fileBase64Value = jsonTempBase64.getString("base64value");
-                tempDetailModel.fileName = jsonTempBase64.getString("filename");
+                if (jsonTempBase64.containsKey("filename")) {
+                    tempDetailModel.fileName = jsonTempBase64.getString("filename");
+                }
+                if (jsonTempBase64.containsKey("fileId")) {
+                    tempDetailModel.fileId = jsonTempBase64.getString("fileId");
+                }
                 tempDetailModel.fileOwnType = jsonTempBase64.getString("fileType");
                 paramModel.fileDetaile.add(tempDetailModel);
             }
