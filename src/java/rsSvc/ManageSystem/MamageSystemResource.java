@@ -175,7 +175,7 @@ public class MamageSystemResource {
                     Map<String, String> value = entrySet.getValue();
                     if (!UtileSmart.getStringFromMap(paramMap, paramKey_deviceMac).equals(value.get("deviceMac"))) {
                         return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("输入用户名或密码错误或设备mac值不匹配.", param));
-                    } else if (value.get("tellerOrgNo").equals(value.get("deviceOrgNo"))) {
+                    } else if (!value.get("tellerOrgNo").equals(value.get("deviceOrgNo"))) {
                         return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("输入用户名或密码错误或机构值不匹配.", param));
                     }
                 }

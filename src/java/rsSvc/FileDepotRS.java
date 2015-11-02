@@ -230,17 +230,22 @@ public class FileDepotRS {
                 //本次文件保存成功，设置本地路径值，后续操作失败可以返回删除保存的文件
                 fileDetaile.fileLocalPath = strSvcFileLocalName;
 
-                StringBuffer sbSql = new StringBuffer();
+                if (fileDetaile.fileId != null && !fileDetaile.fileId.isEmpty()) {
 
-                sbSql.append(String.format("insert into FILEDEPOT_LS (FID,FNAME,FPATH,FSUMMARY,OWNID,OWNFILETYPE,UPLOADDATE) select  FID,FNAME,FPATH,FSUMMARY,OWNID,OWNFILETYPE,UPLOADDATE from FILEDEPOT  as t_f where t_f.OWNID='%s'  and t_f.FID ='%s' ", paramModel.ownid, fileDetaile.fileId));
-                strSqls.add(sbSql.toString());
+                    strSqls.add(String.format("insert into FILEDEPOT_LS (FID,FNAME,FPATH,FSUMMARY,OWNID,OWNFILETYPE,UPLOADDATE) select  FID,FNAME,FPATH,FSUMMARY,OWNID,OWNFILETYPE,UPLOADDATE from FILEDEPOT  as t_f where t_f.OWNID='%s'  and t_f.FID ='%s' ", paramModel.ownid, fileDetaile.fileId));
 
-                //生成sql语句，待文件全部上传成功，保存到数据库
-                strSqls.add(String.format(
-                        "update FILEDEPOT set FNAME='%s',FPATH='%s',OWNFILETYPE='%s',UPLOADDATE=getdate()  where FID='%s' and OWNID='%s'",
-                        strUpFileName, sbFilePathTemp.toString(), fileDetaile.fileOwnType, fileDetaile.fileId, paramModel.ownid));
-                
-                
+                    //生成sql语句，待文件全部上传成功，保存到数据库
+                    strSqls.add(String.format(
+                            "update FILEDEPOT set FNAME='%s',FPATH='%s',OWNFILETYPE='%s',UPLOADDATE=getdate()  where FID='%s' and OWNID='%s'",
+                            strUpFileName, sbFilePathTemp.toString(), fileDetaile.fileOwnType, fileDetaile.fileId, paramModel.ownid));
+                } else {
+                    strSqls.add(String.format(
+                            "INSERT INTO FILEDEPOT (FID,FNAME,FPATH,FSUMMARY,OWNID,OWNFILETYPE) VALUES ('%s','%s','%s','%s','%s','%s')",
+                            UUID.randomUUID().toString(), strUpFileName, sbFilePathTemp.toString(), "md5", paramModel.ownid, fileDetaile.fileOwnType)
+                    );
+
+                }
+
                 sbTemp.delete(0, sbTemp.length());
                 sbFilePathTemp.delete(0, sbFilePathTemp.length());
             }
@@ -315,14 +320,16 @@ public class FileDepotRS {
      * @param pownid
      * @param formFileData
      * @param pfileType
+     * @param pfileId
      * @param pfilename
      * @return
      */
     @POST
     @Path("UpLoadFile")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public String UpLoadFile(@FormDataParam("RSID") String pRSID, @FormDataParam("token") String ptoken, @FormDataParam("ownid") String pownid, @FormDataParam("filename") String pfilename, @FormDataParam("fileType") String pfileType, FormDataMultiPart formFileData) {
-
+    public String UpLoadFile(@FormDataParam("RSID") String pRSID, @FormDataParam("token") String ptoken, @FormDataParam("ownid") String pownid, @FormDataParam("filename") String pfilename, @FormDataParam("fileType") String pfileType, @FormDataParam("fileId") String pfileId, FormDataMultiPart formFileData) {
+        /*  添加fileId 支持修改，如果传入fileId 表示修改，如果没有传入fileId 表示新增
+         */
         FileDepotParamModel paramModel = new FileDepotParamModel();
         paramModel.ownid = pownid;
         paramModel.rsid = pRSID;
@@ -331,11 +338,12 @@ public class FileDepotRS {
         DepotFileDetailModel detailModel = new DepotFileDetailModel();
         detailModel.fileName = pfilename;
         detailModel.fileOwnType = pfileType;
+        detailModel.fileId = pfileId;
         paramModel.fileDetaile.add(detailModel);
 
         try {
             common.SignVerify.SignCommon.verifySign(paramModel.token, true);
-            return SaveUpLoadFile(formFileData, paramModel, false);
+            return SaveUpLoadFile(formFileData, paramModel);
         } catch (Exception ex) {
             return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(ex.getLocalizedMessage(), paramModel.toStringInformation(), ex));
         }
@@ -354,11 +362,11 @@ public class FileDepotRS {
     public String UpLoadFileParam(@FormDataParam("param") String strParam, FormDataMultiPart formFileData) {
         FileDepotParamModel paramModel = null;
         try {
-            paramModel = analyzeUpLoadFileJsonStr(strParam, false);
+            paramModel = analyzeUpLoadFileJsonStr(strParam);
 
             common.SignVerify.SignCommon.verifySign(paramModel.token, true);
 
-            return SaveUpLoadFile(formFileData, paramModel, false);
+            return SaveUpLoadFile(formFileData, paramModel);
         } catch (Exception ex) {
             RSLogger.ErrorLogInfo(String.format("UpLoadFileParamError:%s,param：%s", ex.getLocalizedMessage(), strParam), ex);
             return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(ex.getLocalizedMessage(), paramModel == null ? null : paramModel.toStringInformation()));
@@ -387,7 +395,7 @@ public class FileDepotRS {
      * @return
      * @throws Exception
      */
-    public FileDepotParamModel analyzeUpLoadFileJsonStr(String strJson, boolean isModify) throws Exception {
+    public FileDepotParamModel analyzeUpLoadFileJsonStr(String strJson) throws Exception {
 
         FileDepotParamModel paramModel = null;
         JSONObject jsonObj = null, jsonBody = null, jsonHead = null, jsonTempFile = null;
@@ -406,14 +414,15 @@ public class FileDepotRS {
             jsonFileDes = jsonBody.getJSONArray("fileDes");
             for (Object jsonFileDe : jsonFileDes) {
                 jsonTempFile = (JSONObject) jsonFileDe;
-                if (isModify) {
-                    paramModel.addFileDetail(jsonTempFile.getString("filename"), jsonTempFile.getString("fileType"), jsonTempFile.getString("fileOverlay"), jsonTempFile.getString("fileId"));
-                } else {
-                    DepotFileDetailModel detailModel = new DepotFileDetailModel();
-                    detailModel.fileName = jsonTempFile.getString("filename");
-                    detailModel.fileOwnType = jsonTempFile.getString("fileType");
-                    paramModel.addFileDetail(detailModel);
+
+                DepotFileDetailModel detailModel = new DepotFileDetailModel();
+                detailModel.fileName = jsonTempFile.getString("filename");
+                detailModel.fileOwnType = jsonTempFile.getString("fileType");
+                if (jsonTempFile.containsKey("fileId")) {
+                    detailModel.fileId = jsonTempFile.getString("fileId");
                 }
+                paramModel.addFileDetail(detailModel);
+
             }
             return paramModel;
         } catch (Exception e) {
@@ -478,7 +487,7 @@ public class FileDepotRS {
      * @param isModify 是否提交
      * @return
      */
-    private String SaveUpLoadFile(FormDataMultiPart formFileData, FileDepotParamModel paramModel, boolean isModify) {
+    private String SaveUpLoadFile(FormDataMultiPart formFileData, FileDepotParamModel paramModel) {
 
         InputStream isTempFile = null;
         FormDataContentDisposition detailTempFile = null;
@@ -530,7 +539,7 @@ public class FileDepotRS {
                 sbFilePathTemp.append(File.separator).append(strUpFileName).toString();
                 strSvcFileLocalName = sbTemp.append(File.separator).append(strUpFileName).toString();
                 bSvcFileExist = FileHelper.CheckFileExist(strSvcFileLocalName, false);
-                if (bSvcFileExist && isModify == false) {
+                if (bSvcFileExist) {
                     return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(String.format("文件已经存在，不能修改。请联系管理员维护附件系统。%s", strUpFileName), paramModel.toStringInformation()));
                 }
                 //判断数据库是否存在 ownid 和 fpath重复的数据，如果有数据重复不能上传文件
@@ -556,14 +565,13 @@ public class FileDepotRS {
                     //本次文件保存成功，设置本地路径值，后续操作失败可以返回删除保存的文件
                     tempFileDetailModel.fileLocalPath = strSvcFileLocalName;
                     //生成sql语句，待文件全部上传成功，保存到数据库
-                    if (isModify) {
-                        //todo  修改文件 下面sql不可用
-                        // 1,保存新文件到服务器，
-                        // 2，根据 uuid 查询到以前的数据，删除服务器以前的文件
-                        //3，根据 uuid 更新最新的数据
+                    if (tempFileDetailModel.fileId != null && !tempFileDetailModel.fileId.isEmpty()) {
+
+                        setStrSqls.add(String.format("insert into FILEDEPOT_LS (FID,FNAME,FPATH,FSUMMARY,OWNID,OWNFILETYPE,UPLOADDATE) select  FID,FNAME,FPATH,FSUMMARY,OWNID,OWNFILETYPE,UPLOADDATE from FILEDEPOT  as t_f where t_f.OWNID='%s'  and t_f.FID ='%s' ", paramModel.ownid, tempFileDetailModel.fileId));
                         setStrSqls.add(String.format(
-                                "INSERT INTO FILEDEPOT (FID,FNAME,FPATH,FSUMMARY,OWNID,OWNFILETYPE) VALUES ('%s','%s','%s','%s','%s','%s')",
-                                UUID.randomUUID().toString(), strUpFileName, sbFilePathTemp.toString(), "md5", paramModel.ownid, tempFileDetailModel.fileOwnType));
+                                "update FILEDEPOT set FNAME='%s',FPATH='%s',OWNFILETYPE='%s',UPLOADDATE=getdate()  where FID='%s' and OWNID='%s'",
+                                strUpFileName, sbFilePathTemp.toString(), tempFileDetailModel.fileOwnType, tempFileDetailModel.fileId, paramModel.ownid));
+
                     } else {
                         setStrSqls.add(String.format(
                                 "INSERT INTO FILEDEPOT (FID,FNAME,FPATH,FSUMMARY,OWNID,OWNFILETYPE) VALUES ('%s','%s','%s','%s','%s','%s')",
