@@ -209,7 +209,7 @@ public class DeployInfo {
         return null;
     }
 
-    private static String GetHttpPath() throws Exception {
+    public static String GetHttpPath() throws Exception {
         if (HttpPath_Str == null || HttpPath_Str.isEmpty()) {
             //readSetUp();
             throw new Exception("have't load deployInfo.");

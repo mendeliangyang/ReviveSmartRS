@@ -36,6 +36,13 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import java.util.UUID;
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import jms.JMSQueueMessage;
 
 /**
@@ -357,16 +364,21 @@ public class ReviveRS {
             List<Map<String, String>> resultMap = DBHelper.ExecuteSqlSelectReturnMap(paramModel.rsid, sqlStr);
 
             if (resultMap != null) {
-                StringBuffer exportExcelFilePath = new StringBuffer().append(DeployInfo.GetDeployTempFilePath()).append(File.separator).append(UtileSmart.getUUID()).append(".xls");
+                String FileName = UtileSmart.getUUID() + ".xls";
+                StringBuffer exportExcelFilePath = new StringBuffer().append(DeployInfo.GetDeployTempFilePath()).append(File.separator).append(FileName);
+
+                File exportExcelFile = new File(exportExcelFilePath.toString());
                 System.out.println(exportExcelFilePath);
-                PoiExcelHelper.productExcelFile(resultMap, paramModel.db_exportColumns, paramModel.db_tableName,
-                        new File(exportExcelFilePath.toString()));
-                return "success";
+                PoiExcelHelper.productExcelFile(resultMap, paramModel.db_exportColumns, paramModel.db_tableName, exportExcelFile);
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("file", DeployInfo.GetHttpPath() + "/TempFile/" + FileName);
+                return formationResult.formationResult(ResponseResultCode.Success, new ExecuteResultParam(jsonObject));
+
             } else {
-                return "error";
+                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("unknow error.", param));
             }
         } catch (Exception e) {
-            return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(e.getLocalizedMessage(), param, e));
+            return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(e.getLocalizedMessage(), param));
         } finally {
             if (paramModel != null) {
                 paramModel.destroySelf();

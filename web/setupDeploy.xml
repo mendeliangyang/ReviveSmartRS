@@ -105,7 +105,7 @@
         <dbUser>sa</dbUser>
         <dbpwd>123456</dbpwd>
     </systemSet>-->
-    <httpPath>http://220.231.153.66:80/ReviveSmartRS/</httpPath>
+    <httpPath>http://220.231.153.66:8009/ReviveSmartRS/</httpPath>
     <httpAddress>192.168.169.217</httpAddress>
     <httpPort>8007</httpPort>
     <httpTimeOut>30</httpTimeOut>
