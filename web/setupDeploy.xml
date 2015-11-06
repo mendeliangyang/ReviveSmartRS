@@ -1,34 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <deploy>
-    <systemSet id="ReviveSmartDB">
+    <systemSet id="ReviveSmartDB">    
+        <dbType>sybase</dbType>
         <dbAddress>192.168.100.64</dbAddress>
         <dbPort>5000</dbPort>
         <dbName>ReviveSmartDB</dbName>
         <dbUser>sa</dbUser>
         <dbpwd>123456</dbpwd>
     </systemSet>
-    <systemSet id="tempTest">
+    <systemSet id="tempTest">    
+        <dbType>sybase</dbType>
         <dbAddress>192.168.100.64</dbAddress>
         <dbPort>5000</dbPort>
         <dbName>tempTest</dbName>
         <dbUser>sa</dbUser>
         <dbpwd>123456</dbpwd>
     </systemSet>
-    <systemSet id="CreditApply">
+    <systemSet id="CreditApply">    
+        <dbType>sybase</dbType>
         <dbAddress>192.168.100.64</dbAddress>
         <dbPort>5000</dbPort>
         <dbName>CreditApply</dbName>
         <dbUser>sa</dbUser>
         <dbpwd>123456</dbpwd>
     </systemSet>
-    <systemSet id="E_Bank">
+    <systemSet id="E_Bank">    
+        <dbType>sybase</dbType>
         <dbAddress>192.168.100.64</dbAddress>
         <dbPort>5000</dbPort>
         <dbName>E_Bank</dbName>
         <dbUser>sa</dbUser>
         <dbpwd>123456</dbpwd>
     </systemSet>
-    <systemSet id="AustraliaBank">
+    <systemSet id="AustraliaBank">    
+        <dbType>sybase</dbType>
         <dbAddress>192.168.169.217</dbAddress>
         <dbPort>5000</dbPort>
         <dbName>AustraliaBank</dbName>
@@ -49,13 +54,14 @@
             <dbURLColumn>Uphotodata</dbURLColumn>-->
         </pushMsg>
     </systemSet>
-    <systemSet id="microCredit">
+    <systemSet id="microCredit">    
+        <dbType>sybase</dbType>
         <dbAddress>192.168.169.217</dbAddress>
         <dbPort>5000</dbPort>
         <dbName>microCredit</dbName>
         <dbUser>sa</dbUser>
         <dbpwd>123456</dbpwd>
-        <pushMsg pushId="creditCusInfo1">
+        <pushMsg pushId="creditCusInfo1">   
             <dbTable>creditCusInfo</dbTable>
             <sqlFilter>Mc_cusStatus = '1' or Mc_cusStatus = '-1'</sqlFilter>
             <pageSize>10</pageSize>
@@ -70,7 +76,8 @@
             <dbURLColumn>Uphotodata</dbURLColumn>-->
         </pushMsg>
     </systemSet>
-    <systemSet id="ElectornicBank">
+    <systemSet id="ElectornicBank">    
+        <dbType>sybase</dbType>
         <dbAddress>192.168.169.217</dbAddress>
         <dbPort>5000</dbPort>
         <dbName>ElectornicBank</dbName>
@@ -84,14 +91,16 @@
             <dbURLColumn>Uphotodata</dbURLColumn>-->
         </pushMsg>
     </systemSet>
-    <systemSet id="manageSystem">
+    <systemSet id="manageSystem">    
+        <dbType>sybase</dbType>
         <dbAddress>192.168.169.217</dbAddress>
         <dbPort>5000</dbPort>
         <dbName>manageSystem</dbName>
         <dbUser>sa</dbUser>
         <dbpwd>123456</dbpwd>
     </systemSet>
-     <systemSet id="advisory">
+    <systemSet id="advisory">    
+        <dbType>sybase</dbType>
         <dbAddress>192.168.169.217</dbAddress>
         <dbPort>5000</dbPort>
         <dbName>advisory</dbName>

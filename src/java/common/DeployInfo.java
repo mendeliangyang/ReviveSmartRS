@@ -71,6 +71,8 @@ public class DeployInfo {
                         .getTextContent();
                 setModel.dbPort = tempSet.getElementsByTagName("dbPort").item(0)
                         .getTextContent();
+                setModel.dbType = tempSet.getElementsByTagName("dbType").item(0)
+                        .getTextContent();
 //                setModel.httpPath = tempSet.getElementsByTagName("httpPath").item(0)
 //                        .getTextContent();
                 msgFilterList = tempSet.getElementsByTagName("pushMsg");
