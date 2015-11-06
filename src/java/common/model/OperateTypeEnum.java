@@ -10,15 +10,15 @@ package common.model;
  * @author Administrator
  */
 public enum OperateTypeEnum {
+
     insert,
     update,
     delete,
     select,
     selectCount,
+    exportExcel,
     fileOperate,
     base64Operate,
-    
-    
     signOn,
     signOff,
 

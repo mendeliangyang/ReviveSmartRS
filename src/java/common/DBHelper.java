@@ -16,6 +16,7 @@ import common.model.TableDetailModel;
 import common.model.SystemSetModel;
 import common.model.TableInfoModel;
 import java.sql.*; // JDBC
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -1005,6 +1006,47 @@ public class DBHelper {
             DBHelper.CloseConnection(result, stmt, conn);
         }
         return new ExecuteResultParam(0, "", table);
+    }
+
+    /**
+     * 使用完成后，注意清理 map，避免内存泄漏 cleanMapTDString
+     *
+     * @param rsid
+     * @param sqlStr
+     * @return
+     * @throws Exception
+     */
+    public static List<Map<String, String>> ExecuteSqlSelectReturnMap(String rsid, String sqlStr) throws Exception {
+        Connection conn = null;
+        Statement stmt = null;
+        ResultSet result = null;
+        try {
+            conn = DBHelper.ConnectSybase(rsid);
+            stmt = conn.createStatement();
+            result = stmt.executeQuery(sqlStr);
+            ResultSetMetaData rsmd = result.getMetaData();
+            int columnCount = rsmd.getColumnCount();
+            List<Map<String, String>> map = new ArrayList<>();
+            Map<String, String> rowMap = null;
+            while (result.next()) {
+                rowMap = new HashMap<>();
+                for (int j = 1; j <= columnCount; j++) {
+//                    rowMap.put(rsmd.getColumnName(j), result.getString(rsmd.getColumnName(j)));
+                    rowMap.put(rsmd.getColumnLabel(j), result.getString(j));
+                }
+                map.add(rowMap);
+            }
+            rsmd = null;
+            result.close();
+            return map;
+        } catch (SQLException e) {
+            //e.printStackTrace();
+            RSLogger.ErrorLogInfo("ExecuteSqlSelectReturnMap ExecuteSqlSelect err sql:" + sqlStr + "exception.msg" + e.getLocalizedMessage(), e);
+            throw new Exception("ExecuteSqlSelectReturnMap ExecuteSqlSelect err sql:" + sqlStr + "exception.msg" + e.getLocalizedMessage());
+
+        } finally {
+            DBHelper.CloseConnection(result, stmt, conn);
+        }
     }
 
     /**

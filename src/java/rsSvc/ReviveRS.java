@@ -9,6 +9,7 @@ import common.DBHelper;
 import common.DeployInfo;
 import common.FileHelper;
 import common.FormationResult;
+import common.PoiExcelHelper;
 import common.model.ExecuteResultParam;
 import common.RSLogger;
 import common.model.ResponseResultCode;
@@ -22,6 +23,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.GET;
@@ -45,7 +48,7 @@ public class ReviveRS {
 
 //    @Context
 //    private UriInfo context;
-    private IAnalyzeReviceParamModel analyzeParamModel = new AnalyzeReviceParamModel();
+    private AnalyzeReviceParamModel analyzeParamModel = new AnalyzeReviceParamModel();
 
     private FormationResult formationResult = new FormationResult();
 
@@ -325,6 +328,50 @@ public class ReviveRS {
                 paramModel.destroySelf();
             }
             UtileSmart.FreeObjects(resultParam, resultParam1, paramModel, param, sqlStr, sqlStr1);
+        }
+    }
+
+    @POST
+    @Path("ExportExcel")
+    public String ExportExcel(String param) {
+        ReviveRSParamModel paramModel = null;
+        String sqlStr = null, sqlStr1 = null;
+
+        try {
+            paramModel = analyzeParamModel.transferReviveRSParamModel(param, OperateTypeEnum.exportExcel);
+
+//            boolean isSignOn = common.VerificationSign.verificationSignOn(paramModel.token, paramModel.rsid);
+//            if (!isSignOn) {
+//                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("请您先登录系统。", param));
+//            }
+            common.SignVerify.SignCommon.verifySign(paramModel.token, true);
+
+            //判断是否有分页
+            if ((paramModel.db_pageNum != -1 && paramModel.db_pageSize != -1) || (paramModel.db_skipNum != -1 && paramModel.db_topNum != -1)) {
+                //调用分页的sql语句构造
+                sqlStr = DBHelper.SqlSelectPageFactory(paramModel);
+            } else {
+                sqlStr = DBHelper.SqlSelectFactory(paramModel);
+            }
+            //执行sql查询
+            List<Map<String, String>> resultMap = DBHelper.ExecuteSqlSelectReturnMap(paramModel.rsid, sqlStr);
+
+            if (resultMap != null) {
+                StringBuffer exportExcelFilePath = new StringBuffer().append(DeployInfo.GetDeployTempFilePath()).append(File.separator).append(UtileSmart.getUUID()).append(".xls");
+                System.out.println(exportExcelFilePath);
+                PoiExcelHelper.productExcelFile(resultMap, paramModel.db_exportColumns, paramModel.db_tableName,
+                        new File(exportExcelFilePath.toString()));
+                return "success";
+            } else {
+                return "error";
+            }
+        } catch (Exception e) {
+            return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(e.getLocalizedMessage(), param, e));
+        } finally {
+            if (paramModel != null) {
+                paramModel.destroySelf();
+            }
+            UtileSmart.FreeObjects(paramModel, param, sqlStr, sqlStr1);
         }
     }
 

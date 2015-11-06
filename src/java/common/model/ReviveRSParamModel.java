@@ -8,6 +8,7 @@ package common.model;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.LinkedHashMap;
 
 /**
  *
@@ -45,27 +46,29 @@ public class ReviveRSParamModel {
     public Map<String, String> db_valueColumns;//添加，指定列名称和值  ，修改，指定修改的列和值
 
     public Map<String, String> db_valueFilter;//修改，安装列值来修改数据，删除，安装列值来删除数据
-    
+
     public String treeNId;// 树形数据的树形节点编号
-    
+
     public String treeNUpColumn;//树形节点数据父节点名称
-    
+
     public String treeNUpId;//树形节点数据父节点编号
-    
+
     public String treeNColumn;//树形节点编号列名称
-    
+
     public List<ReviveRSParamDBLeftLinkModel> db_leftLink;// 关联从表集合
+
+    public LinkedHashMap<String, String> db_exportColumns; // 导出excel
 
     public String getInformation() {
         StringBuffer sb = new StringBuffer();
 
         sb.append(String.format("ReviveRSParamModel:  db_tableName :'%s'", db_tableName)).append("\t");
-        sb.append(String.format("token :'%s'",token)).append("\t");
+        sb.append(String.format("token :'%s'", token)).append("\t");
         sb.append(String.format("rsid :'%s'", rsid)).append("\t");
         sb.append(String.format("sql :'%s'", sql)).append("\t");
-        sb.append(String.format("db_orderBy:'%s'",db_orderBy)).append("\t");
+        sb.append(String.format("db_orderBy:'%s'", db_orderBy)).append("\t");
         sb.append(String.format("pkValue :'%s'", pkValue)).append("\t");
-        
+
         if (pkValues != null) {
             sb.append(String.format("pkValues size:'%d'", pkValues.size()));
             for (String keySet : pkValues.keySet()) {

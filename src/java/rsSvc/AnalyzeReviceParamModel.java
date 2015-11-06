@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Set;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -28,7 +29,7 @@ public class AnalyzeReviceParamModel implements IAnalyzeReviceParamModel {
     @Override
     public ReviveRSParamModel transferReviveRSParamModel(String param, OperateTypeEnum operateType) throws Exception {
         ReviveRSParamModel paramModel = null;
-        JSONObject jsonObj = null, jsonBody = null, jsonNote = null, jsonHead = null, jsonValues = null, jsonPkvalue = null, jsonLeftLink = null;
+        JSONObject jsonObj = null, jsonBody = null, jsonNote = null, jsonHead = null, jsonValues = null, jsonPkvalue = null, jsonLeftLink = null, jsonExportExcel = null;
         JSONArray url_columns = null, db_columns = null, db_leftLink = null, dbll_linkSeekCol = null;
         String strTemp = null;
         Object objPkvalue = null;
@@ -65,7 +66,7 @@ public class AnalyzeReviceParamModel implements IAnalyzeReviceParamModel {
                 }
             }
             // select
-            if (OperateTypeEnum.select == operateType) {
+            if (OperateTypeEnum.select == operateType || operateType.exportExcel == operateType) {
                 paramModel.sql = UtileSmart.TryGetJsonString(jsonValues, "sql");
                 paramModel.db_orderBy = UtileSmart.TryGetJsonString(jsonValues, "db_orderBy");
                 paramModel.db_pageSize = UtileSmart.overrideParseShort(UtileSmart.TryGetJsonString(jsonNote, "db_pageSize"));
@@ -104,6 +105,15 @@ public class AnalyzeReviceParamModel implements IAnalyzeReviceParamModel {
                             tempLeftLinkModel.dbll_linkSeekCol.add(dbll_linkSeekCol.getString(j));
                         }
                         paramModel.db_leftLink.add(tempLeftLinkModel);
+                    }
+                }
+                //analyze export excel
+                if (jsonNote.containsKey("db_exportColumns")) {
+                    jsonExportExcel = jsonNote.getJSONObject("db_exportColumns");
+                    paramModel.db_exportColumns = new LinkedHashMap<String, String>();
+                    Set jsonExportExcelKeySet = jsonExportExcel.keySet();
+                    for (Object jsonExportExcelKey : jsonExportExcelKeySet) {
+                        paramModel.db_exportColumns.put(jsonExportExcelKey.toString(), jsonExportExcel.getString(jsonExportExcelKey.toString()));
                     }
                 }
             }
