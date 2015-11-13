@@ -374,19 +374,6 @@ public class FileDepotRS {
 
     }
 
-    /**
-     * 上传文件到服务器
-     *
-     * @param strParam json字符串，文本参数
-     * @param formFileData file 对象
-     * @return
-     */
-    @POST
-    @Path("ModifyDepotFile")
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public String ModifyDepotFile(@FormDataParam("param") String strParam, FormDataMultiPart formFileData) {
-        return "developing";// SaveUpLoadFile(formFileData, strParam, true);
-    }
 
     /**
      * 解析json
@@ -501,12 +488,12 @@ public class FileDepotRS {
         DepotFileDetailModel tempFileDetailModel = null;
         int saveFlag = 1;
         if (paramModel == null) {
-            return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("解析参数发生错误", "check : form-data"));
+            return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("analyze param error.", "check : form-data"));
         }
 
         boolean isSignOn = common.VerificationSign.verificationSignOn(paramModel.token, paramModel.rsid);
         if (!isSignOn) {
-            return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("请您先登录系统", paramModel.toStringInformation()));
+            return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("don't have token.", paramModel.toStringInformation()));
         }
         try {
             List<FormDataBodyPart> listFile = formFileData.getFields("file");
@@ -526,11 +513,11 @@ public class FileDepotRS {
                 FileHelper.CheckFileExist(sbTemp.toString());
                 tempFileDetailModel = paramModel.getFileDetailModel(strUpFileName);
                 if (tempFileDetailModel == null) {
-                    return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(String.format("获取文件‘ %s’的详细参数失败。", strUpFileName), paramModel.toStringInformation()));
+                    return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(String.format("take file information error:‘ %s’", strUpFileName), paramModel.toStringInformation()));
                 }
                 //判断如果类型应该是纯字符串，如果包含 文件路径分隔符(File.separator) 错误路径
                 if (tempFileDetailModel.fileOwnType.indexOf(File.separator) > 0) {
-                    return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(String.format("文件类型错误，类型中不应该包含文件分隔符", strUpFileName), paramModel.toStringInformation()));
+                    return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(String.format("fileType error,the fileType need not mark.", strUpFileName), paramModel.toStringInformation()));
                 }
                 sbFilePathTemp.append(File.separator).append(tempFileDetailModel.fileOwnType);
                 sbTemp.append(File.separator).append(tempFileDetailModel.fileOwnType);
@@ -540,17 +527,17 @@ public class FileDepotRS {
                 strSvcFileLocalName = sbTemp.append(File.separator).append(strUpFileName).toString();
                 bSvcFileExist = FileHelper.CheckFileExist(strSvcFileLocalName, false);
                 if (bSvcFileExist) {
-                    return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(String.format("文件已经存在，不能修改。请联系管理员维护附件系统。%s", strUpFileName), paramModel.toStringInformation()));
+                    return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(String.format("file exist .%s", strUpFileName), paramModel.toStringInformation()));
                 }
                 //判断数据库是否存在 ownid 和 fpath重复的数据，如果有数据重复不能上传文件
                 resultParam = DBHelper.ExecuteSqlOnceSelect(DeployInfo.MasterRSID, String.format("SELECT COUNT(*) AS ROWSCOUNT FROM FILEDEPOT WHERE OWNID<>'%s' AND FPATH='%s'", paramModel.ownid, sbFilePathTemp.toString()));
                 if (resultParam.ResultCode != 0) {
-                    return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(String.format("检查数据库文件信息发送错误。%s : Msg : %s", strUpFileName, resultParam.errMsg), paramModel.toStringInformation()));
+                    return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(String.format("check db error.%s : Msg : %s", strUpFileName, resultParam.errMsg), paramModel.toStringInformation()));
                 }
                 //检查ROWSCOUNT 不为0可以继续操作 ROWSCOUNT 不等于0表示有其他文件关联该文件，要求客户修改文件名称，或者联系管理员维护服务器文件
                 if (resultParam.ResultJsonObject != null) {
                     if (Integer.parseInt(resultParam.ResultJsonObject.getJSONObject(DeployInfo.ResultDataTag).getString("ROWSCOUNT")) > 0) {
-                        return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(String.format("‘%s’,该文件名已经存在并于与其他业务数据关联，请修改文件名称重新提交，或者联系管理员维护附件服务器。", strUpFileName), paramModel.toStringInformation()));
+                        return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(String.format("‘%s’,the file is exist ,and related other data.", strUpFileName), paramModel.toStringInformation()));
                     }
                 }
 
@@ -591,7 +578,7 @@ public class FileDepotRS {
                 resultParam = SelectDepotFileByOwn(new FileDepotParamModel(paramModel.ownid));
                 return formationResult.formationResult(ResponseResultCode.Success, new ExecuteResultParam(resultParam.ResultJsonObject));
             } else {
-                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(String.format("保存数据失败：%s", resultParam.errMsg), paramModel.toStringInformation()));
+                return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(String.format("save data to db error.：%s", resultParam.errMsg), paramModel.toStringInformation()));
             }
         } catch (Exception e) {
             return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam(e.getLocalizedMessage(), paramModel.toStringInformation(), e));
