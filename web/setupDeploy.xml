@@ -43,15 +43,15 @@
             <dbTable>BankCard</dbTable>
             <sqlFilter>ChandleStatus ='未审批'</sqlFilter>
             <pageSize>0</pageSize>
-            <!--            <dbColumn>Uphotodata</dbColumn>
-            <dbURLColumn>Uphotodata</dbURLColumn>-->
+            <dbColumn>Uphotodata</dbColumn>
+            <dbURLColumn>Uphotodata</dbURLColumn>
         </pushMsg>
         <pushMsg pushId="BankCardApply">
             <dbTable>BankCard</dbTable>
             <sqlFilter>ChandleStatus ='已审批'</sqlFilter>
             <pageSize>0</pageSize>
-            <!--            <dbColumn>Uphotodata</dbColumn>
-            <dbURLColumn>Uphotodata</dbURLColumn>-->
+            <dbColumn>Uphotodata</dbColumn>
+            <dbURLColumn>Uphotodata</dbURLColumn>
         </pushMsg>
     </systemSet>
     <systemSet id="microCredit">    
@@ -115,7 +115,7 @@
         <dbpwd>123456</dbpwd>
     </systemSet>-->
     <httpPath>http://220.231.153.66:8009/ReviveSmartRS/</httpPath>
-    <httpAddress>192.168.169.217</httpAddress>
-    <httpPort>8007</httpPort>
+    <httpAddress>220.231.153.66</httpAddress>
+    <httpPort>8118</httpPort>
     <httpTimeOut>30</httpTimeOut>
 </deploy>

@@ -64,32 +64,43 @@ public class SignCommon {
      *
      * @param token
      */
-    public static void SignOut(String token) {
-        SignRecordPutThreadPool.execute(() -> {
-            SignInformationModel tempModel = null;
-            for (SignInformationModel SignRecord : SignRecords) {
-                if (SignRecord.token.equals(token)) {
-                    tempModel = SignRecord;
-                    break;
+    public static void SignOut(final String token) {
+
+        SignRecordPutThreadPool.execute(new Runnable() {
+            @Override
+            public void run() {
+                SignInformationModel tempModel = null;
+                for (SignInformationModel SignRecord : SignRecords) {
+                    if (SignRecord.token.equals(token)) {
+                        tempModel = SignRecord;
+                        break;
+                    }
+                }
+                synchronized (SignRecords) {
+                    SignRecords.remove(tempModel);
                 }
             }
-            synchronized (SignRecords) {
-                SignRecords.remove(tempModel);
-            }
         });
+
+//        SignRecordPutThreadPool.execute(() -> {
+//            SignInformationModel tempModel = null;
+//            for (SignInformationModel SignRecord : SignRecords) {
+//                if (SignRecord.token.equals(token)) {
+//                    tempModel = SignRecord;
+//                    break;
+//                }
+//            }
+//            synchronized (SignRecords) {
+//                SignRecords.remove(tempModel);
+//            }
+//        });
     }
 
     /**
-     * //occur=ture 验证失败会引发异常
-     * rsSvc.SignVerify.SignCommon.verifySign(mamageSysAnalyze.getToken(),true);
-     * try catch 判断是否登录
+     * //occur=ture 验证失败会引发异常 rsSvc.SignVerify.SignCommon.verifySign(mamageSysAnalyze.getToken(),true); try catch 判断是否登录
      *
      *
-     * // occur = false 通过返回值判断是否登录成功 boolean isSignIn =
-     * rsSvc.SignVerify.SignCommon.verifySign(mamageSysAnalyze.getToken(),false);
-     * if (!isSignIn) { return
-     * formationResult.formationResult(ResponseResultCode.Error, new
-     * ExecuteResultParam("会话无效，请您先登录系统。", param)); }
+     * // occur = false 通过返回值判断是否登录成功 boolean isSignIn = rsSvc.SignVerify.SignCommon.verifySign(mamageSysAnalyze.getToken(),false); if (!isSignIn) { return formationResult.formationResult(ResponseResultCode.Error, new ExecuteResultParam("会话无效，请您先登录系统。", param)); }
      *
      *
      * @param token

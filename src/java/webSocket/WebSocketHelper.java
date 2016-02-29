@@ -27,6 +27,7 @@ public class WebSocketHelper {
     public static boolean asyncSendTextToClient(Session session, String strMsg) throws IOException {
         if (session.isOpen()) {
             session.getAsyncRemote().sendText(strMsg);
+            common.RSLogger.wsErrorLogInfo(String.format("%s:%s", session.getId(), strMsg));
             return true;
         }
         return false;

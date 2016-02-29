@@ -47,7 +47,7 @@ public class AssignTrial {
             SystemSetModel next = iterator.next();
             for (Iterator<MsgFilterModel> iterator1 = next.msgFilters.iterator(); iterator1.hasNext();) {
                 MsgFilterModel next1 = iterator1.next();
-                pushMap.put(next1, new HashSet<>());
+                pushMap.put(next1, new HashSet<Session>());
             }
         }
         //启动线程

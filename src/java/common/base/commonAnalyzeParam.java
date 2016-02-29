@@ -104,13 +104,19 @@ public class commonAnalyzeParam {
                 if (objSourceTemp.containsKey(key)) {
                     Object objTemp = objSourceTemp.get(key);
                     if (objTemp instanceof String) {
-                        paramModel.replace(key, objTemp);
+                        paramModel.remove(key);
+                        paramModel.put(key, objTemp);
+//                        paramModel.replace(key, objTemp);
                     } else if (objTemp instanceof JSONArray) {
                         //todo jsonarray
-                        paramModel.replace(key, JSONArray.fromObject(objTemp));
+                        paramModel.remove(key);
+                        paramModel.put(key, JSONArray.fromObject(objTemp));
+//                        paramModel.replace(key, JSONArray.fromObject(objTemp));
                     } else if (objTemp instanceof JSONObject) {
                         //todo 在chat系统中jsonobject转换成string比较容易处理，但是在其他场景中就麻烦了，所以这里需要更改成jsonobject
-                        paramModel.replace(key, objTemp.toString());
+                        paramModel.remove(key);
+                        paramModel.put(key, objTemp.toString());
+//                        paramModel.replace(key, objTemp.toString());
                         //throw new Exception("not supper jsonobject.");
                     } else {
                         throw new Exception("param unknow type.");
